@@ -1,0 +1,35 @@
+buildscript {
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath 'com.android.tools.build:gradle:8.2.1'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.22"
+  }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+  compileSdkVersion 34
+  namespace "com.myapp.rustbridge"
+
+  defaultConfig {
+    minSdkVersion 23
+    targetSdkVersion 34
+  }
+
+  sourceSets {
+    main {
+      jniLibs.srcDirs = ['src/main/jniLibs']
+    }
+  }
+}
+
+dependencies {
+  implementation project(':expo-modules-core')
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.22"
+  implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+}

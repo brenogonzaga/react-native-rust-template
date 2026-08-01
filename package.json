@@ -1,0 +1,42 @@
+{
+  "name": "react-native-rust-template",
+  "version": "1.0.0",
+  "description": "Production-ready React Native & Expo boilerplate template for executing high-performance Rust logic via Expo Native Modules, C FFI, and JNI.",
+  "main": "index.ts",
+  "keywords": [
+    "react-native",
+    "rust",
+    "expo",
+    "expo-native-module",
+    "ffi",
+    "jni",
+    "mobile",
+    "tokio",
+    "cross-platform",
+    "swift",
+    "kotlin",
+    "boilerplate",
+    "template"
+  ],
+  "dependencies": {
+    "expo": "~57.0.9",
+    "expo-modules-core": "~57.0.1",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-native": "0.86.2",
+    "rust-bridge": "file:./modules/rust-bridge"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.js setup",
+    "preios": "node scripts/setup.js ios",
+    "ios": "expo run:ios",
+    "preandroid": "node scripts/setup.js android",
+    "android": "expo run:android",
+    "start": "expo start"
+  },
+  "private": true
+}

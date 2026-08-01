@@ -1,0 +1,56 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# Rust Build Artifacts
+target/
+**/target/
+**/*.rs.bk
+
+
+# Compiled Native Rust Libraries (Ignore heavy binaries, preserve folder structure with .gitkeep)
+modules/rust-bridge/ios/lib/*.a
+modules/rust-bridge/android/src/main/jniLibs/**/*.so
+!modules/rust-bridge/ios/lib/.gitkeep
+!modules/rust-bridge/android/src/main/jniLibs/.gitkeep
+
+# Node & Package Managers
+node_modules/
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.pnpm-debug.log*
+
+# Expo & Web
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native iOS & Android Prebuild Folders
+/ios
+/android
+.kotlin/
+.gradle/
+**/build/
+Pods/
+*.xcworkspace
+*.xcodeproj
+
+# Keys & Certificates
+*.jks
+*.p8
+*.p12
+*.key
+*.pem
+*.mobileprovision
+
+# Metro & Bundler
+.metro-health-check*
+
+# OS & Environment
+.DS_Store
+.env
+.env*.local
+*.env
+
+# TypeScript
+*.tsbuildinfo

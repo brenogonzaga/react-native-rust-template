@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "crates/app_core",
+    "rust-core",
+]
+resolver = "2"

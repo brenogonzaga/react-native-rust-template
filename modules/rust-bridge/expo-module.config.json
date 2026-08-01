@@ -1,0 +1,10 @@
+{
+  "platforms": ["ios", "android"],
+  "apple": {
+    "modules": ["RustBridgeModule"],
+    "podspecPath": "rust-bridge.podspec"
+  },
+  "android": {
+    "modules": ["com.myapp.rustbridge.RustBridgeModule"]
+  }
+}
