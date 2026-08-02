@@ -19,7 +19,6 @@ module.exports = function withRust(config) {
       if (!isMac) return config;
 
       console.log(`\x1b[36m[Expo Plugin] Compiling Rust core for iOS (${iosTarget})...\x1b[0m`);
-      const rustCoreDir = path.join(projectRoot, "rust-core");
       const iosLibDir = path.join(projectRoot, "modules", "rust-bridge", "ios", "lib");
       
       if (!fs.existsSync(iosLibDir)) {
@@ -29,7 +28,7 @@ module.exports = function withRust(config) {
       try {
         execSync(`cargo build --release -p rust-core --target ${iosTarget}`, {
           cwd: projectRoot,
-          stdio: "inherit",
+          stdio: [0, 1, 1],
           env: { ...process.env, IPHONEOS_DEPLOYMENT_TARGET: "16.0" },
         });
 
@@ -63,7 +62,7 @@ module.exports = function withRust(config) {
       try {
         execSync(`cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o ${outDir} build --release`, {
           cwd: rustCoreDir,
-          stdio: "inherit",
+          stdio: [0, 1, 1],
         });
 
         const requiredAbis = ["arm64-v8a", "armeabi-v7a", "x86_64"];

@@ -16,7 +16,7 @@ const ANDROID_JNILIBS_DIR = path.join(ROOT_DIR, "modules", "rust-bridge", "andro
 function run(cmd, cwd = ROOT_DIR, env = {}) {
   console.log(`\x1b[36m> [setup] ${cmd}\x1b[0m`);
   try {
-    execSync(cmd, { cwd, stdio: "inherit", env: { ...process.env, ...env } });
+    execSync(cmd, { cwd, stdio: [0, 1, 1], env: { ...process.env, ...env } });
   } catch (err) {
     console.error(`\x1b[31m[setup] Command failed: ${cmd}\x1b[0m`);
     process.exit(1);
