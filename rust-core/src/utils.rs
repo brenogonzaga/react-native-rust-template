@@ -17,9 +17,7 @@ impl CommandParser {
             .map_err(|_| "Command is not valid UTF-8".to_string())?;
 
         let args_str = if !args_ptr.is_null() {
-            CStr::from_ptr(args_ptr)
-                .to_str()
-                .unwrap_or("")
+            CStr::from_ptr(args_ptr).to_str().unwrap_or("")
         } else {
             ""
         };

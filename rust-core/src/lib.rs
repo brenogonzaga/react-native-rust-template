@@ -1,9 +1,9 @@
 mod dispatcher;
 mod error;
 mod handlers;
+pub mod mock_export;
 mod state;
 mod utils;
-pub mod mock_export;
 
 use dispatcher::{BridgeCommand, BridgeDispatcher, BridgeResponse};
 use error::BridgeError;
@@ -65,7 +65,8 @@ pub unsafe extern "C" fn call_rust(cmd: *const c_char, args: *const c_char) -> *
         Err(err_msg) => {
             let err_res = BridgeResponse::<()>::Error(BridgeError::Internal(err_msg));
             serde_json::to_string(&err_res).unwrap_or_else(|_| {
-                r#"{"status":"error","kind":"internal","message":"Command parsing error"}"#.to_string()
+                r#"{"status":"error","kind":"internal","message":"Command parsing error"}"#
+                    .to_string()
             })
         }
     });

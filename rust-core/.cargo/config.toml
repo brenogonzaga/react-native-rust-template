@@ -1,0 +1,8 @@
+[env]
+# ts-rs: use `number` instead of `bigint` for i64/u64/i128/u128.
+# Without this, every timestamp and count becomes `bigint` in TypeScript,
+# which breaks React and React Native (they expect plain numbers).
+TS_RS_LARGE_INT = "number"
+
+# Force ts-rs to auto-generate ALL TypeScript bindings directly into rust-core/bindings
+TS_RS_EXPORT_DIR = { value = "bindings", relative = true }

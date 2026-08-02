@@ -10,7 +10,8 @@ use ts_rs::TS;
 /// 1. Use `#[ts(type = "string")]` or `#[ts(as = "...")]` on the corresponding field.
 /// 2. Map the struct using a local transparent wrapper with `#[serde(transparent)]`.
 #[derive(Serialize, TS)]
-#[ts(export, export_to = "../../modules/rust-bridge/src/types.generated.ts")]
+#[ts(export)]
+#[allow(dead_code)]
 pub struct GlobalTypesMock {
     pub user: User,
     pub app_version: AppVersion,

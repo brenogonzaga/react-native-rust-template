@@ -11,7 +11,9 @@ pub enum SystemCommand {
 pub struct SystemHandler;
 
 impl SystemHandler {
-    pub async fn dispatch(cmd: SystemCommand) -> Result<serde_json::Value, crate::error::BridgeError> {
+    pub async fn dispatch(
+        cmd: SystemCommand,
+    ) -> Result<serde_json::Value, crate::error::BridgeError> {
         match cmd {
             SystemCommand::Ping => Ok(serde_json::json!("pong")),
             SystemCommand::GetVersion => {
