@@ -3,6 +3,7 @@ mod error;
 mod handlers;
 mod state;
 mod utils;
+pub mod mock_export;
 
 use dispatcher::{BridgeCommand, BridgeDispatcher, BridgeResponse};
 use error::BridgeError;

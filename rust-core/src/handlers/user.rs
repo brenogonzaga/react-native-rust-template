@@ -1,8 +1,10 @@
 use crate::error::BridgeError;
 use crate::state::CORE_SERVICE;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use ts_rs::TS;
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, TS)]
+#[ts(export)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum UserCommand {
     GetUser { id: String },

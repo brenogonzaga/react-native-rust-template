@@ -11,6 +11,8 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { callRust } from "rust-bridge";
+import type { User } from "@app_core/User";
+import type { AppVersion } from "@app_core/AppVersion";
 
 interface LogEntry {
   id: string;
@@ -107,7 +109,7 @@ export default function App() {
           <TouchableOpacity
             style={[styles.btn, styles.btnSky, activeCmd === "version" && styles.active]}
             onPress={() =>
-              runBridge<{ version: string; core_engine: string }>(
+              runBridge<AppVersion>(
                 "version",
                 "system",
                 "App Version",
@@ -147,7 +149,7 @@ export default function App() {
           <TouchableOpacity
             style={[styles.btn, styles.btnAmber, activeCmd === "get_user" && styles.active]}
             onPress={() =>
-              runBridge<{ id: string; name: string; role: string }>(
+              runBridge<User>(
                 "get_user",
                 "shared",
                 "Get User #1",
@@ -165,7 +167,7 @@ export default function App() {
             style={[styles.btn, styles.btnEmerald, activeCmd === "save_user" && styles.active]}
             onPress={() => {
               const id = String(Date.now()).slice(-4);
-              runBridge<{ id: string; name: string; role: string }>(
+              runBridge<User>(
                 "save_user",
                 "shared",
                 `Save User #${id}`,

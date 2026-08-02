@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
 use thiserror::Error;
+use ts_rs::TS;
 
 #[derive(Error, Debug)]
 pub enum CoreError {
@@ -12,14 +13,16 @@ pub enum CoreError {
     FactorialOverflow(u64),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct User {
     pub id: String,
     pub name: String,
     pub role: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, TS)]
+#[ts(export)]
 pub struct AppVersion {
     pub version: &'static str,
     pub core_engine: &'static str,
