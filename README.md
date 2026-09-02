@@ -54,6 +54,7 @@ This template shows how to run shared Rust business logic inside a React Native 
 Expo CLI (`npx expo start`) bundles JavaScript, while Expo Prebuild (`npx expo run:android` / `npx expo run:ios`) compiles native code.
 
 To call Rust from React Native:
+
 1. Rust is cross-compiled for target architectures (`aarch64-linux-android` / `aarch64-apple-ios-sim`) with `IPHONEOS_DEPLOYMENT_TARGET=16.0`.
 2. Compiled binaries are placed in `modules/rust-bridge/android/src/main/jniLibs` and `modules/rust-bridge/ios/lib`.
 3. Expo prebuild links the Rust library into the native iOS/Android binaries.
@@ -129,6 +130,7 @@ If you change the Android package name (e.g., from `com.myapp.rustbridge` to `co
 
 1. **Android JNI Function (`rust-core/src/lib.rs`)**:
    Rename `Java_com_myapp_rustbridge_RustBridgeModule_callRustNative` to match your new Android package path (replacing dots with underscores):
+
    ```rust
    // For package com.yourcompany.app:
    pub extern "system" fn Java_com_yourcompany_app_RustBridgeModule_callRustNative(...)

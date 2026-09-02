@@ -20,14 +20,22 @@
   ],
   "dependencies": {
     "expo": "~57.0.9",
+    "expo-localization": "~57.0.1",
     "expo-modules-core": "~57.0.1",
     "expo-status-bar": "~57.0.1",
+    "i18n-js": "^4.5.3",
     "react": "19.2.3",
     "react-native": "0.86.2",
     "rust-bridge": "file:./modules/rust-bridge"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~57.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.9.6",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -36,7 +44,24 @@
     "ios": "expo run:ios",
     "preandroid": "node scripts/setup.js android",
     "android": "expo run:android",
-    "start": "expo start"
+    "start": "expo start",
+    "lint": "expo lint",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
-  "private": true
+  "private": true,
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "eslint --fix --no-warn-ignored",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ],
+    "*.rs": [
+      "rustfmt --edition 2021"
+    ]
+  }
 }

@@ -6,7 +6,8 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
-      "@app_core/*": ["./crates/app_core/bindings/*"]
+      "@app_core/*": ["./crates/app_core/bindings/*"],
+      "@rust-core/*": ["./rust-core/bindings/*"]
     }
   }
 }

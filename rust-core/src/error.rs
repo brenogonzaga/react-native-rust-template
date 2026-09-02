@@ -1,36 +1,41 @@
 use app_core::CoreError;
 use serde::Serialize;
 use thiserror::Error;
+use ts_rs::TS;
 
-#[derive(Error, Debug, Serialize)]
-#[serde(tag = "kind", content = "message", rename_all = "lowercase")]
+#[derive(Error, Debug, Serialize, TS)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+#[ts(export)]
 pub enum BridgeError {
-    #[error("Not found: {0}")]
-    NotFound(String),
+    #[error("User not found: {id}")]
+    NotFound { id: String },
 
-    #[error("Invalid argument: {0}")]
-    InvalidArgument(String),
+    #[error("Factorial input {n} exceeds maximum supported limit of 20")]
+    FactorialOverflow { n: u64 },
 
-    #[error("Internal error: {0}")]
-    Internal(String),
+    #[error("Invalid argument: {reason}")]
+    InvalidArgument { reason: String },
 
-    #[error("Serialization error: {0}")]
-    Serialization(String),
+    #[error("Internal error: {reason}")]
+    Internal { reason: String },
+
+    #[error("Serialization error: {reason}")]
+    Serialization { reason: String },
 }
 
 impl From<serde_json::Error> for BridgeError {
     fn from(err: serde_json::Error) -> Self {
-        BridgeError::Serialization(err.to_string())
+        BridgeError::Serialization {
+            reason: err.to_string(),
+        }
     }
 }
 
 impl From<CoreError> for BridgeError {
     fn from(err: CoreError) -> Self {
         match err {
-            CoreError::UserNotFound(msg) => BridgeError::NotFound(msg),
-            CoreError::FactorialOverflow(msg) => {
-                BridgeError::InvalidArgument(format!("Factorial input overflow: {}", msg))
-            }
+            CoreError::UserNotFound(id) => BridgeError::NotFound { id },
+            CoreError::FactorialOverflow(n) => BridgeError::FactorialOverflow { n },
         }
     }
 }
@@ -42,6 +47,30 @@ pub trait ResultExt<T> {
 
 impl<T, E: std::fmt::Display> ResultExt<T> for Result<T, E> {
     fn to_bridge(self) -> Result<T, BridgeError> {
-        self.map_err(|e| BridgeError::Internal(e.to_string()))
+        self.map_err(|e| BridgeError::Internal {
+            reason: e.to_string(),
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn not_found_serializes_to_kind_plus_params() {
+        let err = BridgeError::from(CoreError::UserNotFound("42".into()));
+        let json = serde_json::to_value(&err).unwrap();
+        assert_eq!(json, serde_json::json!({ "kind": "not_found", "id": "42" }));
+    }
+
+    #[test]
+    fn factorial_overflow_serializes_to_kind_plus_params() {
+        let err = BridgeError::from(CoreError::FactorialOverflow(21));
+        let json = serde_json::to_value(&err).unwrap();
+        assert_eq!(
+            json,
+            serde_json::json!({ "kind": "factorial_overflow", "n": 21 })
+        );
     }
 }

@@ -1,0 +1,9 @@
+{
+  "errors": {
+    "not_found": "User %{id} was not found",
+    "factorial_overflow": "Factorial input %{n} exceeds the maximum of 20",
+    "invalid_argument": "Invalid argument: %{reason}",
+    "internal": "Internal error: %{reason}",
+    "serialization": "Serialization error: %{reason}"
+  }
+}

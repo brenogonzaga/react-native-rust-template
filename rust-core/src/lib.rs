@@ -52,10 +52,9 @@ pub unsafe extern "C" fn call_rust(cmd: *const c_char, args: *const c_char) -> *
         Ok(json_payload) => match serde_json::from_str::<BridgeCommand>(&json_payload) {
             Ok(command) => RUNTIME.block_on(BridgeDispatcher::run(command)),
             Err(err) => {
-                let err_res = BridgeResponse::<()>::Error(BridgeError::InvalidArgument(format!(
-                    "Failed to parse bridge command: {}",
-                    err
-                )));
+                let err_res = BridgeResponse::<()>::Error(BridgeError::InvalidArgument {
+                    reason: format!("Failed to parse bridge command: {}", err),
+                });
                 serde_json::to_string(&err_res).unwrap_or_else(|_| {
                     r#"{"status":"error","kind":"internal","message":"Failed to serialize error"}"#
                         .to_string()
@@ -63,7 +62,7 @@ pub unsafe extern "C" fn call_rust(cmd: *const c_char, args: *const c_char) -> *
             }
         },
         Err(err_msg) => {
-            let err_res = BridgeResponse::<()>::Error(BridgeError::Internal(err_msg));
+            let err_res = BridgeResponse::<()>::Error(BridgeError::Internal { reason: err_msg });
             serde_json::to_string(&err_res).unwrap_or_else(|_| {
                 r#"{"status":"error","kind":"internal","message":"Command parsing error"}"#
                     .to_string()

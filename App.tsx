@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -10,65 +10,20 @@ import {
   Platform,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { callRust } from "rust-bridge";
 import type { User } from "@app_core/User";
 import type { AppVersion } from "@app_core/AppVersion";
-
-interface LogEntry {
-  id: string;
-  timestamp: string;
-  type: "system" | "native" | "shared" | "error";
-  title: string;
-  payload: string;
-}
+import { i18n, type Locale } from "./src/i18n";
+import { useRustBridge } from "./src/hooks/useRustBridge";
+import { LocaleSwitcher } from "./src/components/LocaleSwitcher";
+import { ExecutionConsole } from "./src/components/ExecutionConsole";
 
 export default function App() {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [activeCmd, setActiveCmd] = useState<string | null>(null);
+  const { logs, loading, activeCmd, runBridge, clearLogs } = useRustBridge();
+  const [locale, setLocale] = useState<Locale>(i18n.locale as Locale);
 
-  const addLog = (type: LogEntry["type"], title: string, payload: string) => {
-    setLogs((prev) => [
-      {
-        id: Math.random().toString(36).substring(2, 9),
-        timestamp: new Date().toLocaleTimeString(),
-        type,
-        title,
-        payload,
-      },
-      ...prev,
-    ]);
-  };
-
-  const clearLogs = () => setLogs([]);
-
-  const runBridge = async <T,>(
-    cmdKey: string,
-    type: LogEntry["type"],
-    title: string,
-    command: string,
-    args?: unknown
-  ) => {
-    setLoading(true);
-    setActiveCmd(cmdKey);
-    const start = Date.now();
-    try {
-      const res = await callRust<T>(command, args);
-      const latency = Date.now() - start;
-      const formatted =
-        typeof res === "object" ? JSON.stringify(res, null, 2) : String(res);
-      addLog(type, `${title} (${latency}ms)`, formatted);
-    } catch (err) {
-      addLog(
-        "error",
-        `Error: ${title}`,
-        err instanceof Error ? err.message : String(err)
-      );
-    } finally {
-      setLoading(false);
-      setActiveCmd(null);
-    }
-  };
+  useEffect(() => {
+    i18n.locale = locale;
+  }, [locale]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -88,13 +43,18 @@ export default function App() {
           <Text style={styles.subtitle}>
             Multi-Crate Architecture • Expo Native Modules
           </Text>
+          <LocaleSwitcher locale={locale} onChange={setLocale} />
         </View>
 
         {/* 1. SYSTEM */}
         <Text style={styles.sectionHeader}>System</Text>
         <View style={styles.row}>
           <TouchableOpacity
-            style={[styles.btn, styles.btnIndigo, activeCmd === "ping" && styles.active]}
+            style={[
+              styles.btn,
+              styles.btnIndigo,
+              activeCmd === "ping" && styles.active,
+            ]}
             onPress={() =>
               runBridge<string>("ping", "system", "Ping Test", "system", {
                 type: "ping",
@@ -107,14 +67,18 @@ export default function App() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btn, styles.btnSky, activeCmd === "version" && styles.active]}
+            style={[
+              styles.btn,
+              styles.btnSky,
+              activeCmd === "version" && styles.active,
+            ]}
             onPress={() =>
               runBridge<AppVersion>(
                 "version",
                 "system",
                 "App Version",
                 "system",
-                { type: "get_version" }
+                { type: "get_version" },
               )
             }
             activeOpacity={0.7}
@@ -127,7 +91,11 @@ export default function App() {
         {/* 2. NATIVE */}
         <Text style={styles.sectionHeader}>Native</Text>
         <TouchableOpacity
-          style={[styles.btnFull, styles.btnTeal, activeCmd === "math" && styles.active]}
+          style={[
+            styles.btnFull,
+            styles.btnTeal,
+            activeCmd === "math" && styles.active,
+          ]}
           onPress={() =>
             runBridge<number>("math", "native", "Factorial (5!)", "math", {
               type: "factorial",
@@ -138,8 +106,38 @@ export default function App() {
         >
           <Text style={styles.btnIcon}>🧮</Text>
           <View style={styles.btnTextCol}>
-            <Text style={[styles.btnTitle, styles.textTeal]}>Factorial (5!)</Text>
+            <Text style={[styles.btnTitle, styles.textTeal]}>
+              Factorial (5!)
+            </Text>
             <Text style={styles.btnSub}>Pure Rust calculation in app_core</Text>
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.btnFull,
+            styles.btnRose,
+            activeCmd === "math-overflow" && styles.active,
+          ]}
+          onPress={() =>
+            runBridge<number>(
+              "math-overflow",
+              "native",
+              "Factorial (25!)",
+              "math",
+              { type: "factorial", n: 25 },
+            )
+          }
+          activeOpacity={0.7}
+        >
+          <Text style={styles.btnIcon}>💥</Text>
+          <View style={styles.btnTextCol}>
+            <Text style={[styles.btnTitle, styles.textRose]}>
+              Factorial (25!)
+            </Text>
+            <Text style={styles.btnSub}>
+              Triggers a Rust error, shown localized ({locale.toUpperCase()})
+            </Text>
           </View>
         </TouchableOpacity>
 
@@ -147,15 +145,16 @@ export default function App() {
         <Text style={styles.sectionHeader}>Shared</Text>
         <View style={styles.row}>
           <TouchableOpacity
-            style={[styles.btn, styles.btnAmber, activeCmd === "get_user" && styles.active]}
+            style={[
+              styles.btn,
+              styles.btnAmber,
+              activeCmd === "get_user" && styles.active,
+            ]}
             onPress={() =>
-              runBridge<User>(
-                "get_user",
-                "shared",
-                "Get User #1",
-                "user",
-                { type: "get_user", id: "1" }
-              )
+              runBridge<User>("get_user", "shared", "Get User #1", "user", {
+                type: "get_user",
+                id: "1",
+              })
             }
             activeOpacity={0.7}
           >
@@ -164,7 +163,11 @@ export default function App() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.btn, styles.btnEmerald, activeCmd === "save_user" && styles.active]}
+            style={[
+              styles.btn,
+              styles.btnEmerald,
+              activeCmd === "save_user" && styles.active,
+            ]}
             onPress={() => {
               const id = String(Date.now()).slice(-4);
               runBridge<User>(
@@ -177,7 +180,7 @@ export default function App() {
                   id,
                   name: "Carlos Dev",
                   role: "Lead Engineer",
-                }
+                },
               );
             }}
             activeOpacity={0.7}
@@ -195,46 +198,7 @@ export default function App() {
           </View>
         )}
 
-        {/* Output Console Box */}
-        <View style={styles.consoleBox}>
-          <View style={styles.consoleHeader}>
-            <Text style={styles.consoleTitle}>EXECUTION LOGS</Text>
-            {logs.length > 0 && (
-              <TouchableOpacity onPress={clearLogs}>
-                <Text style={styles.clearText}>Clear</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-
-          <View style={styles.consoleBody}>
-            {logs.length === 0 ? (
-              <Text style={styles.emptyText}>
-                Tap any button above to call Rust FFI logic.
-              </Text>
-            ) : (
-              logs.map((log) => (
-                <View key={log.id} style={styles.logCard}>
-                  <View style={styles.logMeta}>
-                    <Text
-                      style={[
-                        styles.tag,
-                        log.type === "system" && styles.tagSystem,
-                        log.type === "native" && styles.tagNative,
-                        log.type === "shared" && styles.tagShared,
-                        log.type === "error" && styles.tagError,
-                      ]}
-                    >
-                      {log.type.toUpperCase()}
-                    </Text>
-                    <Text style={styles.time}>{log.timestamp}</Text>
-                  </View>
-                  <Text style={styles.logTitle}>{log.title}</Text>
-                  <Text style={styles.logPayload}>{log.payload}</Text>
-                </View>
-              ))
-            )}
-          </View>
-        </View>
+        <ExecutionConsole logs={logs} onClear={clearLogs} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -326,11 +290,13 @@ const styles = StyleSheet.create({
   btnTeal: { backgroundColor: "#f0fdf4", borderColor: "#bbf7d0" },
   btnAmber: { backgroundColor: "#fffbeb", borderColor: "#fde68a" },
   btnEmerald: { backgroundColor: "#ecfdf5", borderColor: "#a7f3d0" },
+  btnRose: { backgroundColor: "#fff1f2", borderColor: "#fecdd3" },
   textIndigo: { color: "#3730a3" },
   textSky: { color: "#075985" },
   textTeal: { color: "#065f46" },
   textAmber: { color: "#92400e" },
   textEmerald: { color: "#065f46" },
+  textRose: { color: "#9f1239" },
   active: { opacity: 0.5 },
   btnIcon: { fontSize: 16 },
   btnTextCol: { flex: 1 },
@@ -349,73 +315,4 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   loadingText: { color: "#3730a3", fontSize: 12, fontWeight: "600" },
-  consoleBox: {
-    backgroundColor: "#0f172a",
-    borderColor: "#1e293b",
-    borderWidth: 1,
-    borderRadius: 14,
-    marginTop: 16,
-    overflow: "hidden",
-  },
-  consoleHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#1e293b",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  consoleTitle: {
-    color: "#cbd5e1",
-    fontSize: 10,
-    fontWeight: "800",
-    letterSpacing: 1,
-  },
-  clearText: { color: "#38bdf8", fontSize: 11, fontWeight: "600" },
-  consoleBody: { padding: 12, minHeight: 100 },
-  emptyText: {
-    color: "#64748b",
-    fontStyle: "italic",
-    fontSize: 12,
-    textAlign: "center",
-    marginTop: 20,
-  },
-  logCard: {
-    backgroundColor: "#1e293b",
-    borderColor: "#334155",
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 6,
-  },
-  logMeta: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 2,
-  },
-  tag: {
-    fontSize: 8,
-    fontWeight: "800",
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  tagSystem: { backgroundColor: "#312e81", color: "#a5b4fc" },
-  tagNative: { backgroundColor: "#134e4a", color: "#2dd4bf" },
-  tagShared: { backgroundColor: "#78350f", color: "#fcd34d" },
-  tagError: { backgroundColor: "#7f1d1d", color: "#fca5a5" },
-  time: {
-    color: "#94a3b8",
-    fontSize: 9,
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-  },
-  logTitle: { color: "#f8fafc", fontSize: 11, fontWeight: "700", marginBottom: 2 },
-  logPayload: {
-    color: "#38bdf8",
-    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
-    fontSize: 10,
-    lineHeight: 14,
-  },
 });

@@ -82,9 +82,63 @@ impl AppService {
     }
 
     pub fn save_user(&self, id: String, name: String, role: String) -> User {
-        let user = User { id: id.clone(), name, role };
+        let user = User {
+            id: id.clone(),
+            name,
+            role,
+        };
         let mut guard = self.users.lock().unwrap();
         guard.insert(id, user.clone());
         user
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn factorial_computes_known_values() {
+        let service = AppService::new();
+        assert_eq!(service.calculate_factorial(0).unwrap(), 1);
+        assert_eq!(service.calculate_factorial(5).unwrap(), 120);
+        assert_eq!(
+            service.calculate_factorial(20).unwrap(),
+            2432902008176640000
+        );
+    }
+
+    #[test]
+    fn factorial_rejects_overflow() {
+        let service = AppService::new();
+        assert!(matches!(
+            service.calculate_factorial(21),
+            Err(CoreError::FactorialOverflow(21))
+        ));
+    }
+
+    #[test]
+    fn get_user_returns_seeded_user() {
+        let service = AppService::new();
+        let user = service.get_user("1").unwrap();
+        assert_eq!(user.name, "Alice Core");
+    }
+
+    #[test]
+    fn get_user_missing_id_errors() {
+        let service = AppService::new();
+        assert!(matches!(
+            service.get_user("missing"),
+            Err(CoreError::UserNotFound(id)) if id == "missing"
+        ));
+    }
+
+    #[test]
+    fn save_user_round_trips_through_get_user() {
+        let service = AppService::new();
+        let saved = service.save_user("2".into(), "Bob".into(), "Engineer".into());
+        let fetched = service.get_user("2").unwrap();
+        assert_eq!(saved.name, fetched.name);
+        assert_eq!(fetched.role, "Engineer");
     }
 }

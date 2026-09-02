@@ -23,8 +23,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "./plugins/withRust"
-    ]
+    "plugins": ["./plugins/withRust", "expo-localization"]
   }
 }
