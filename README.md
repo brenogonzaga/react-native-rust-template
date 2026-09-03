@@ -121,6 +121,8 @@ import { callRust } from "rust-bridge";
 // Call a handler defined in rust-core/src/handlers/
 async function calculateFactorial() {
   try {
+    // Result is a string: 64-bit values cross the wire as decimal strings —
+    // JS numbers are f64 and would round anything past 2^53.
     const result = await callRust<string>("math", {
       type: "factorial",
       n: 5,
@@ -140,7 +142,7 @@ async function calculateFactorial() {
 2. **Errors** (`rust-core/src/error.rs`): if the operation can fail, add a variant to `CoreError` and map it in the `From<CoreError> for BridgeError` impl.
 3. **Handler** (`rust-core/src/handlers/`): add or extend a `<Name>Command` enum (`#[serde(tag = "type")]`) and its `dispatch()` match arm, calling into the domain logic via `CORE_SERVICE` and returning `Wire::encode(&value)` (`rust-core/src/wire.rs`). `Wire::encode` only accepts types implementing `SafeForWire`, which is what forces a 64-bit+ value through `SafeInt<T>` (`rust-core/src/safe_int.rs`) instead of a bare `u64`/`i64`.
 4. **Dispatcher** (`rust-core/src/dispatcher.rs`): add the handler's command enum as a variant of `BridgeCommand` (`#[serde(tag = "cmd", content = "args")]`) and route it in `BridgeDispatcher::run()`. New handler file? Add `pub mod <name>;` to `handlers/mod.rs`.
-5. **Regenerate TS types**: run `cargo test --workspace` — any `#[ts(export)]` type is (re)written to `rust-core/bindings/` or `crates/app_core/bindings/` as a side effect of the test run .
+5. **Regenerate TS types**: run `cargo test --workspace` — any `#[ts(export)]` type is (re)written to `rust-core/bindings/` or `crates/app_core/bindings/` as a side effect of the test run.
 6. **Call it from TypeScript**:
    ```typescript
    const result = await callRust<ReturnType>("<command>", {
@@ -173,6 +175,8 @@ If you change the Android package name (e.g., from `com.myapp.rustbridge` to `co
    // For package com.yourcompany.app:
    pub extern "system" fn Java_com_yourcompany_app_RustBridgeModule_callRustNative(...)
    ```
+
+   Works whether `callRustNative` is declared directly on the module class (as here) or as `@JvmStatic external` inside a `companion object` — Kotlin emits the native method on the outer class either way (`javap -s` on the compiled class confirms it).
 
 2. **Android Package Namespace (`modules/rust-bridge/android/build.gradle`)**:
    Update `namespace` in the `android {}` block to match your target package:
