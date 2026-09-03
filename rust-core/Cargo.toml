@@ -5,16 +5,21 @@ edition = "2021"
 
 [lib]
 name = "rust_bridge"
-crate-type = ["staticlib", "cdylib", "rlib"]
+# staticlib -> iOS (.a), cdylib -> Android (.so). No `rlib`: nothing depends on
+# this crate from Rust, and it was a third full link per target on every build.
+crate-type = ["staticlib", "cdylib"]
 
 [dependencies]
 app_core = { path = "../crates/app_core" }
 serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-tokio = { version = "1.38", features = ["full"] }
+serde_json = { version = "1.0", features = ["raw_value"] }
 once_cell = "1.19"
 thiserror = "2.0"
 ts-rs = "12.0"
 
 [target.'cfg(target_os = "android")'.dependencies]
 jni = { version = "0.22", default-features = false }
+
+[dev-dependencies]
+syn = { version = "2", features = ["full"] }
+quote = "1"

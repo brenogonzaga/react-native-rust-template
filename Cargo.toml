@@ -4,3 +4,15 @@ members = [
     "rust-core",
 ]
 resolver = "2"
+
+[profile.release]
+# `call_rust` relies on `catch_unwind` to stop a panic before it crosses the
+# `extern "C"` boundary. Switching this to "abort" would silently turn every
+# contained error back into a process crash, so it is pinned explicitly.
+panic = "unwind"
+overflow-checks = true
+lto = true
+codegen-units = 1
+# `debuginfo`, not `symbols`: the exported `call_rust` / `free_rust_string`
+# symbols must survive for the iOS staticlib to link.
+strip = "debuginfo"

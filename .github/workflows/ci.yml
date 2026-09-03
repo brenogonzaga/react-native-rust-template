@@ -18,6 +18,7 @@ jobs:
       - run: npm run lint
       - run: npm run format:check
       - run: npm run typecheck
+      - run: npm test -- --ci
 
   rust:
     runs-on: ubuntu-latest
@@ -26,7 +27,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
+          targets: aarch64-linux-android
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --check
       - run: cargo clippy --workspace --all-targets -- -D warnings
+      - run: cargo clippy --target aarch64-linux-android -p rust-core --lib -- -D warnings
       - run: cargo test --workspace

@@ -1,6 +1,8 @@
 use crate::error::BridgeError;
 use crate::state::CORE_SERVICE;
+use crate::wire::Wire;
 use serde::{Deserialize, Serialize};
+use serde_json::value::RawValue;
 use ts_rs::TS;
 
 #[derive(Serialize, Deserialize, TS)]
@@ -19,15 +21,11 @@ pub enum UserCommand {
 pub struct UserHandler;
 
 impl UserHandler {
-    pub async fn dispatch(cmd: UserCommand) -> Result<serde_json::Value, BridgeError> {
+    pub fn dispatch(cmd: UserCommand) -> Result<Box<RawValue>, BridgeError> {
         match cmd {
-            UserCommand::GetUser { id } => {
-                let user = CORE_SERVICE.get_user(&id)?;
-                Ok(serde_json::to_value(user)?)
-            }
+            UserCommand::GetUser { id } => Wire::encode(&CORE_SERVICE.get_user(&id)?),
             UserCommand::SaveUser { id, name, role } => {
-                let saved_user = CORE_SERVICE.save_user(id, name, role);
-                Ok(serde_json::to_value(saved_user)?)
+                Wire::encode(&CORE_SERVICE.save_user(id, name, role))
             }
         }
     }

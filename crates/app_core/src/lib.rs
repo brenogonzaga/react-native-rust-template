@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::sync::Mutex;
+use std::sync::{Mutex, PoisonError};
 use thiserror::Error;
 use ts_rs::TS;
 
@@ -74,7 +74,7 @@ impl AppService {
     }
 
     pub fn get_user(&self, id: &str) -> Result<User, CoreError> {
-        let guard = self.users.lock().unwrap();
+        let guard = self.users.lock().unwrap_or_else(PoisonError::into_inner);
         guard
             .get(id)
             .cloned()
@@ -87,7 +87,7 @@ impl AppService {
             name,
             role,
         };
-        let mut guard = self.users.lock().unwrap();
+        let mut guard = self.users.lock().unwrap_or_else(PoisonError::into_inner);
         guard.insert(id, user.clone());
         user
     }

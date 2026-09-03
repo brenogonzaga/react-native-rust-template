@@ -10,6 +10,12 @@ Pod::Spec.new do |s|
 
   s.dependency 'ExpoModulesCore'
 
-  s.source_files = 'ios/**/*.{h,m,mm,swift}'
+  s.source_files = 'ios/**/*.swift'
+
+  s.preserve_paths = 'ios/RustBridge.h', 'ios/module.modulemap'
+  s.pod_target_xcconfig = {
+    'SWIFT_INCLUDE_PATHS' => '$(PODS_TARGET_SRCROOT)/ios'
+  }
+
   s.vendored_libraries = 'ios/lib/librust_bridge.a'
 end

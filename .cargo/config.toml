@@ -1,5 +1,16 @@
 [env]
-# ts-rs: use `number` instead of `bigint` for i64/u64/i128/u128.
-# Without this, every timestamp and count becomes `bigint` in TypeScript,
-# which breaks React and React Native (they expect plain numbers).
+# ts-rs: declare u64/i64/u128/i128 fields as `number` instead of the default
+# `bigint` — React/RN code expects plain numbers.
 TS_RS_LARGE_INT = "number"
+
+# Android 15+ requires 16 KB page-aligned shared libraries (mandatory on Play
+# since Nov 2025). NDK r27+ does this by default; this makes it explicit and
+# safe on older NDKs. Harmless on every other target.
+[target.aarch64-linux-android]
+rustflags = ["-C", "link-arg=-Wl,-z,max-page-size=16384"]
+
+[target.armv7-linux-androideabi]
+rustflags = ["-C", "link-arg=-Wl,-z,max-page-size=16384"]
+
+[target.x86_64-linux-android]
+rustflags = ["-C", "link-arg=-Wl,-z,max-page-size=16384"]

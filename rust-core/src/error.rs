@@ -1,3 +1,4 @@
+use crate::safe_int::SafeInt;
 use app_core::CoreError;
 use serde::Serialize;
 use thiserror::Error;
@@ -11,7 +12,7 @@ pub enum BridgeError {
     NotFound { id: String },
 
     #[error("Factorial input {n} exceeds maximum supported limit of 20")]
-    FactorialOverflow { n: u64 },
+    FactorialOverflow { n: SafeInt<u64> },
 
     #[error("Invalid argument: {reason}")]
     InvalidArgument { reason: String },
@@ -35,21 +36,8 @@ impl From<CoreError> for BridgeError {
     fn from(err: CoreError) -> Self {
         match err {
             CoreError::UserNotFound(id) => BridgeError::NotFound { id },
-            CoreError::FactorialOverflow(n) => BridgeError::FactorialOverflow { n },
+            CoreError::FactorialOverflow(n) => BridgeError::FactorialOverflow { n: SafeInt(n) },
         }
-    }
-}
-
-#[allow(dead_code)]
-pub trait ResultExt<T> {
-    fn to_bridge(self) -> Result<T, BridgeError>;
-}
-
-impl<T, E: std::fmt::Display> ResultExt<T> for Result<T, E> {
-    fn to_bridge(self) -> Result<T, BridgeError> {
-        self.map_err(|e| BridgeError::Internal {
-            reason: e.to_string(),
-        })
     }
 }
 
@@ -70,7 +58,14 @@ mod tests {
         let json = serde_json::to_value(&err).unwrap();
         assert_eq!(
             json,
-            serde_json::json!({ "kind": "factorial_overflow", "n": 21 })
+            serde_json::json!({ "kind": "factorial_overflow", "n": "21" })
         );
+    }
+    #[test]
+    fn factorial_overflow_preserves_n_past_f64_safe_integer_range() {
+        let huge = u64::MAX - 5;
+        let err = BridgeError::from(CoreError::FactorialOverflow(huge));
+        let json = serde_json::to_string(&err).unwrap();
+        assert!(json.contains(&format!(r#""n":"{huge}""#)), "{json}");
     }
 }

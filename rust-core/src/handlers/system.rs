@@ -1,5 +1,8 @@
+use crate::error::BridgeError;
 use crate::state::CORE_SERVICE;
+use crate::wire::Wire;
 use serde::Deserialize;
+use serde_json::value::RawValue;
 
 #[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
@@ -11,15 +14,10 @@ pub enum SystemCommand {
 pub struct SystemHandler;
 
 impl SystemHandler {
-    pub async fn dispatch(
-        cmd: SystemCommand,
-    ) -> Result<serde_json::Value, crate::error::BridgeError> {
+    pub fn dispatch(cmd: SystemCommand) -> Result<Box<RawValue>, BridgeError> {
         match cmd {
-            SystemCommand::Ping => Ok(serde_json::json!("pong")),
-            SystemCommand::GetVersion => {
-                let info = CORE_SERVICE.get_version();
-                Ok(serde_json::to_value(info)?)
-            }
+            SystemCommand::Ping => Wire::encode("pong"),
+            SystemCommand::GetVersion => Wire::encode(&CORE_SERVICE.get_version()),
         }
     }
 }

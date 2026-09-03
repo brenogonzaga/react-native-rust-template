@@ -1,0 +1,4 @@
+module RustBridgeFFI {
+  header "RustBridge.h"
+  export *
+}

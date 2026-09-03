@@ -1,27 +1,16 @@
 import ExpoModulesCore
-
-private let bridgeQueue = DispatchQueue(
-  label: "com.myapp.rust-bridge", qos: .userInitiated, attributes: .concurrent)
+import RustBridgeFFI
 
 public class RustBridgeModule: Module {
   public func definition() -> ModuleDefinition {
     Name("RustBridge")
-
-    AsyncFunction("callRust") { (command: String, payload: String) -> String in
-      guard let resultPtr = call_rust_native(command, payload) else {
-        return "{\"status\":\"error\",\"message\":\"Rust bridge returned null pointer\"}"
+    AsyncFunction("callRust") { (envelope: String) -> String in
+      guard let resultPtr = call_rust(envelope) else {
+        return #"{"status":"error","kind":"internal","reason":"rust bridge returned a null pointer"}"#
       }
+      defer { free_rust_string(resultPtr) }
 
-      let resultString = String(cString: resultPtr)
-      free_rust_string_native(UnsafeMutablePointer(mutating: resultPtr))
-
-      return resultString
-    }.runOnQueue(bridgeQueue)
+      return String(cString: resultPtr)
+    }
   }
 }
-
-@_silgen_name("call_rust")
-func call_rust_native(_ cmd: UnsafePointer<Int8>?, _ args: UnsafePointer<Int8>?) -> UnsafePointer<Int8>?
-
-@_silgen_name("free_rust_string")
-func free_rust_string_native(_ s: UnsafeMutablePointer<Int8>?)
