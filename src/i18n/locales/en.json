@@ -1,4 +1,28 @@
 {
+  "app": {
+    "badge": "RUST ACTIVE",
+    "title": "Rust Core Template",
+    "subtitle": "Multi-Crate Architecture • Expo Native Modules",
+    "sectionSystem": "System",
+    "sectionNative": "Native",
+    "sectionShared": "Shared",
+    "ping": "Ping",
+    "pingLogTitle": "Ping Test",
+    "version": "Version",
+    "versionLogTitle": "App Version",
+    "factorialTitle": "Factorial (5!)",
+    "factorialSub": "Pure Rust calculation in app_core",
+    "factorialOverflowTitle": "Factorial (25!)",
+    "factorialOverflowSub": "Triggers a Rust error, shown localized (%{localeLabel})",
+    "getUser": "Get User",
+    "getUserLogTitle": "Get User #1",
+    "saveUser": "Save User",
+    "saveUserLogTitle": "Save User #%{id}",
+    "loading": "Executing Rust handler...",
+    "logsTitle": "EXECUTION LOGS",
+    "clear": "Clear",
+    "logsEmpty": "Tap any button above to call Rust FFI logic."
+  },
   "errors": {
     "not_found": "User %{id} was not found",
     "factorial_overflow": "Factorial input %{n} exceeds the maximum of 20",

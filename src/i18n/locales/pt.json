@@ -1,4 +1,28 @@
 {
+  "app": {
+    "badge": "RUST ATIVO",
+    "title": "Modelo de Núcleo Rust",
+    "subtitle": "Arquitetura Multi-Crate • Módulos Nativos do Expo",
+    "sectionSystem": "Sistema",
+    "sectionNative": "Nativo",
+    "sectionShared": "Compartilhado",
+    "ping": "Ping",
+    "pingLogTitle": "Teste de Ping",
+    "version": "Versão",
+    "versionLogTitle": "Versão do App",
+    "factorialTitle": "Fatorial (5!)",
+    "factorialSub": "Cálculo puro em Rust no app_core",
+    "factorialOverflowTitle": "Fatorial (25!)",
+    "factorialOverflowSub": "Dispara um erro do Rust, mostrado localizado (%{localeLabel})",
+    "getUser": "Buscar Usuário",
+    "getUserLogTitle": "Buscar Usuário #1",
+    "saveUser": "Salvar Usuário",
+    "saveUserLogTitle": "Salvar Usuário #%{id}",
+    "loading": "Executando handler Rust...",
+    "logsTitle": "LOGS DE EXECUÇÃO",
+    "clear": "Limpar",
+    "logsEmpty": "Toque em qualquer botão acima para chamar a lógica FFI do Rust."
+  },
   "errors": {
     "not_found": "Usuário %{id} não encontrado",
     "factorial_overflow": "Entrada de fatorial %{n} excede o limite máximo de 20",

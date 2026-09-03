@@ -1,206 +1,229 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   ScrollView,
   Platform,
 } from "react-native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
 import type { User } from "@app_core/User";
 import type { AppVersion } from "@app_core/AppVersion";
-import { i18n, type Locale } from "./src/i18n";
+import { t, resolveInitialLocale, type Locale } from "./src/i18n";
 import { useRustBridge } from "./src/hooks/useRustBridge";
 import { LocaleSwitcher } from "./src/components/LocaleSwitcher";
 import { ExecutionConsole } from "./src/components/ExecutionConsole";
 
 export default function App() {
-  const { logs, loading, activeCmd, runBridge, clearLogs } = useRustBridge();
-  const [locale, setLocale] = useState<Locale>(i18n.locale as Locale);
-
-  useEffect(() => {
-    i18n.locale = locale;
-  }, [locale]);
+  const [locale, setLocale] = useState<Locale>(resolveInitialLocale());
+  const { logs, loading, activeCmd, runBridge, clearLogs } =
+    useRustBridge(locale);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <StatusBar style="dark" />
 
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.badge}>
-            <View style={styles.badgeDot} />
-            <Text style={styles.badgeText}>RUST ACTIVE</Text>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.badge}>
+              <View style={styles.badgeDot} />
+              <Text style={styles.badgeText}>{t("app.badge", locale)}</Text>
+            </View>
+            <Text style={styles.title}>{t("app.title", locale)}</Text>
+            <Text style={styles.subtitle}>{t("app.subtitle", locale)}</Text>
+            <LocaleSwitcher locale={locale} onChange={setLocale} />
           </View>
-          <Text style={styles.title}>Rust Core Template</Text>
-          <Text style={styles.subtitle}>
-            Multi-Crate Architecture • Expo Native Modules
+
+          {/* 1. SYSTEM */}
+          <Text style={styles.sectionHeader}>
+            {t("app.sectionSystem", locale)}
           </Text>
-          <LocaleSwitcher locale={locale} onChange={setLocale} />
-        </View>
+          <View style={styles.row}>
+            <TouchableOpacity
+              style={[
+                styles.btn,
+                styles.btnIndigo,
+                activeCmd === "ping" && styles.active,
+              ]}
+              onPress={() =>
+                runBridge<string>(
+                  "ping",
+                  "system",
+                  t("app.pingLogTitle", locale),
+                  "system",
+                  { type: "ping" },
+                )
+              }
+              activeOpacity={0.7}
+            >
+              <Text style={styles.btnIcon}>📡</Text>
+              <Text style={[styles.btnTitle, styles.textIndigo]}>
+                {t("app.ping", locale)}
+              </Text>
+            </TouchableOpacity>
 
-        {/* 1. SYSTEM */}
-        <Text style={styles.sectionHeader}>System</Text>
-        <View style={styles.row}>
+            <TouchableOpacity
+              style={[
+                styles.btn,
+                styles.btnSky,
+                activeCmd === "version" && styles.active,
+              ]}
+              onPress={() =>
+                runBridge<AppVersion>(
+                  "version",
+                  "system",
+                  t("app.versionLogTitle", locale),
+                  "system",
+                  { type: "get_version" },
+                )
+              }
+              activeOpacity={0.7}
+            >
+              <Text style={styles.btnIcon}>⚙️</Text>
+              <Text style={[styles.btnTitle, styles.textSky]}>
+                {t("app.version", locale)}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* 2. NATIVE */}
+          <Text style={styles.sectionHeader}>
+            {t("app.sectionNative", locale)}
+          </Text>
           <TouchableOpacity
             style={[
-              styles.btn,
-              styles.btnIndigo,
-              activeCmd === "ping" && styles.active,
+              styles.btnFull,
+              styles.btnTeal,
+              activeCmd === "math" && styles.active,
             ]}
             onPress={() =>
-              runBridge<string>("ping", "system", "Ping Test", "system", {
-                type: "ping",
-              })
-            }
-            activeOpacity={0.7}
-          >
-            <Text style={styles.btnIcon}>📡</Text>
-            <Text style={[styles.btnTitle, styles.textIndigo]}>Ping</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.btn,
-              styles.btnSky,
-              activeCmd === "version" && styles.active,
-            ]}
-            onPress={() =>
-              runBridge<AppVersion>(
-                "version",
-                "system",
-                "App Version",
-                "system",
-                { type: "get_version" },
+              runBridge<string>(
+                "math",
+                "native",
+                t("app.factorialTitle", locale),
+                "math",
+                { type: "factorial", n: 5 },
               )
             }
             activeOpacity={0.7}
           >
-            <Text style={styles.btnIcon}>⚙️</Text>
-            <Text style={[styles.btnTitle, styles.textSky]}>Version</Text>
+            <Text style={styles.btnIcon}>🧮</Text>
+            <View style={styles.btnTextCol}>
+              <Text style={[styles.btnTitle, styles.textTeal]}>
+                {t("app.factorialTitle", locale)}
+              </Text>
+              <Text style={styles.btnSub}>{t("app.factorialSub", locale)}</Text>
+            </View>
           </TouchableOpacity>
-        </View>
 
-        {/* 2. NATIVE */}
-        <Text style={styles.sectionHeader}>Native</Text>
-        <TouchableOpacity
-          style={[
-            styles.btnFull,
-            styles.btnTeal,
-            activeCmd === "math" && styles.active,
-          ]}
-          onPress={() =>
-            runBridge<number>("math", "native", "Factorial (5!)", "math", {
-              type: "factorial",
-              n: 5,
-            })
-          }
-          activeOpacity={0.7}
-        >
-          <Text style={styles.btnIcon}>🧮</Text>
-          <View style={styles.btnTextCol}>
-            <Text style={[styles.btnTitle, styles.textTeal]}>
-              Factorial (5!)
-            </Text>
-            <Text style={styles.btnSub}>Pure Rust calculation in app_core</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.btnFull,
-            styles.btnRose,
-            activeCmd === "math-overflow" && styles.active,
-          ]}
-          onPress={() =>
-            runBridge<number>(
-              "math-overflow",
-              "native",
-              "Factorial (25!)",
-              "math",
-              { type: "factorial", n: 25 },
-            )
-          }
-          activeOpacity={0.7}
-        >
-          <Text style={styles.btnIcon}>💥</Text>
-          <View style={styles.btnTextCol}>
-            <Text style={[styles.btnTitle, styles.textRose]}>
-              Factorial (25!)
-            </Text>
-            <Text style={styles.btnSub}>
-              Triggers a Rust error, shown localized ({locale.toUpperCase()})
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        {/* 3. SHARED */}
-        <Text style={styles.sectionHeader}>Shared</Text>
-        <View style={styles.row}>
           <TouchableOpacity
             style={[
-              styles.btn,
-              styles.btnAmber,
-              activeCmd === "get_user" && styles.active,
+              styles.btnFull,
+              styles.btnRose,
+              activeCmd === "math-overflow" && styles.active,
             ]}
             onPress={() =>
-              runBridge<User>("get_user", "shared", "Get User #1", "user", {
-                type: "get_user",
-                id: "1",
-              })
+              runBridge<string>(
+                "math-overflow",
+                "native",
+                t("app.factorialOverflowTitle", locale),
+                "math",
+                { type: "factorial", n: 25 },
+              )
             }
             activeOpacity={0.7}
           >
-            <Text style={styles.btnIcon}>🔍</Text>
-            <Text style={[styles.btnTitle, styles.textAmber]}>Get User</Text>
+            <Text style={styles.btnIcon}>💥</Text>
+            <View style={styles.btnTextCol}>
+              <Text style={[styles.btnTitle, styles.textRose]}>
+                {t("app.factorialOverflowTitle", locale)}
+              </Text>
+              <Text style={styles.btnSub}>
+                {t("app.factorialOverflowSub", locale, {
+                  localeLabel: locale.toUpperCase(),
+                })}
+              </Text>
+            </View>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.btn,
-              styles.btnEmerald,
-              activeCmd === "save_user" && styles.active,
-            ]}
-            onPress={() => {
-              const id = String(Date.now()).slice(-4);
-              runBridge<User>(
-                "save_user",
-                "shared",
-                `Save User #${id}`,
-                "user",
-                {
-                  type: "save_user",
-                  id,
-                  name: "Carlos Dev",
-                  role: "Lead Engineer",
-                },
-              );
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.btnIcon}>💾</Text>
-            <Text style={[styles.btnTitle, styles.textEmerald]}>Save User</Text>
-          </TouchableOpacity>
-        </View>
+          {/* 3. SHARED */}
+          <Text style={styles.sectionHeader}>
+            {t("app.sectionShared", locale)}
+          </Text>
+          <View style={styles.row}>
+            <TouchableOpacity
+              style={[
+                styles.btn,
+                styles.btnAmber,
+                activeCmd === "get_user" && styles.active,
+              ]}
+              onPress={() =>
+                runBridge<User>(
+                  "get_user",
+                  "shared",
+                  t("app.getUserLogTitle", locale),
+                  "user",
+                  { type: "get_user", id: "1" },
+                )
+              }
+              activeOpacity={0.7}
+            >
+              <Text style={styles.btnIcon}>🔍</Text>
+              <Text style={[styles.btnTitle, styles.textAmber]}>
+                {t("app.getUser", locale)}
+              </Text>
+            </TouchableOpacity>
 
-        {/* Loading Indicator */}
-        {loading && (
-          <View style={styles.loadingBanner}>
-            <ActivityIndicator size="small" color="#4f46e5" />
-            <Text style={styles.loadingText}>Executing Rust handler...</Text>
+            <TouchableOpacity
+              style={[
+                styles.btn,
+                styles.btnEmerald,
+                activeCmd === "save_user" && styles.active,
+              ]}
+              onPress={() => {
+                const id = String(Date.now()).slice(-4);
+                runBridge<User>(
+                  "save_user",
+                  "shared",
+                  t("app.saveUserLogTitle", locale, { id }),
+                  "user",
+                  {
+                    type: "save_user",
+                    id,
+                    name: "Carlos Dev",
+                    role: "Lead Engineer",
+                  },
+                );
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.btnIcon}>💾</Text>
+              <Text style={[styles.btnTitle, styles.textEmerald]}>
+                {t("app.saveUser", locale)}
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
 
-        <ExecutionConsole logs={logs} onClear={clearLogs} />
-      </ScrollView>
-    </SafeAreaView>
+          {/* Loading Indicator */}
+          {loading && (
+            <View style={styles.loadingBanner}>
+              <ActivityIndicator size="small" color="#4f46e5" />
+              <Text style={styles.loadingText}>{t("app.loading", locale)}</Text>
+            </View>
+          )}
+
+          <ExecutionConsole logs={logs} onClear={clearLogs} locale={locale} />
+        </ScrollView>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

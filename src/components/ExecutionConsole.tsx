@@ -6,29 +6,33 @@ import {
   View,
 } from "react-native";
 import type { LogEntry } from "../hooks/useRustBridge";
+import { t, type Locale } from "../i18n";
 
 interface ExecutionConsoleProps {
   logs: LogEntry[];
   onClear: () => void;
+  locale: Locale;
 }
 
-export function ExecutionConsole({ logs, onClear }: ExecutionConsoleProps) {
+export function ExecutionConsole({
+  logs,
+  onClear,
+  locale,
+}: ExecutionConsoleProps) {
   return (
     <View style={styles.consoleBox}>
       <View style={styles.consoleHeader}>
-        <Text style={styles.consoleTitle}>EXECUTION LOGS</Text>
+        <Text style={styles.consoleTitle}>{t("app.logsTitle", locale)}</Text>
         {logs.length > 0 && (
           <TouchableOpacity onPress={onClear}>
-            <Text style={styles.clearText}>Clear</Text>
+            <Text style={styles.clearText}>{t("app.clear", locale)}</Text>
           </TouchableOpacity>
         )}
       </View>
 
       <View style={styles.consoleBody}>
         {logs.length === 0 ? (
-          <Text style={styles.emptyText}>
-            Tap any button above to call Rust FFI logic.
-          </Text>
+          <Text style={styles.emptyText}>{t("app.logsEmpty", locale)}</Text>
         ) : (
           logs.map((log) => (
             <View key={log.id} style={styles.logCard}>

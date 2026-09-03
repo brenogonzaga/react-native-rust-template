@@ -1,7 +1,5 @@
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import type { Locale } from "../i18n";
-
-const LOCALES: Locale[] = ["en", "pt"];
+import { SUPPORTED_LOCALES, type Locale } from "../i18n";
 
 interface LocaleSwitcherProps {
   locale: Locale;
@@ -11,7 +9,7 @@ interface LocaleSwitcherProps {
 export function LocaleSwitcher({ locale, onChange }: LocaleSwitcherProps) {
   return (
     <View style={styles.localeSwitch}>
-      {LOCALES.map((loc) => (
+      {SUPPORTED_LOCALES.map((loc) => (
         <TouchableOpacity
           key={loc}
           style={[styles.localeBtn, locale === loc && styles.localeBtnActive]}

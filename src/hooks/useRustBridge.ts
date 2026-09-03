@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { callRust } from "rust-bridge";
 import { describeError } from "../utils/describeError";
+import type { Locale } from "../i18n";
 
 export interface LogEntry {
   id: string;
@@ -10,7 +11,7 @@ export interface LogEntry {
   payload: string;
 }
 
-export function useRustBridge() {
+export function useRustBridge(locale: Locale) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeCmd, setActiveCmd] = useState<string | null>(null);
@@ -47,7 +48,7 @@ export function useRustBridge() {
         typeof res === "object" ? JSON.stringify(res, null, 2) : String(res);
       addLog(type, `${title} (${latency}ms)`, formatted);
     } catch (err) {
-      addLog("error", `Error: ${title}`, describeError(err));
+      addLog("error", `Error: ${title}`, describeError(err, locale));
     } finally {
       setLoading(false);
       setActiveCmd(null);
