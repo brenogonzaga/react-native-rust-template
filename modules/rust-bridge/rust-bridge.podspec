@@ -4,7 +4,7 @@ Pod::Spec.new do |s|
   s.summary        = 'Expo module bridging React Native to Rust'
   s.author         = 'Developer'
   s.homepage       = 'https://github.com/example/rust-bridge'
-  s.platforms      = { :ios => '13.4' }
+  s.platforms      = { :ios => '16.0' }
   s.source         = { :path => '.' }
   s.static_framework = true
 
