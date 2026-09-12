@@ -30,6 +30,29 @@ fn native_log(msg: &str) {
     eprintln!("[RustBridge] {msg}");
 }
 
+/// Routes `tracing` output through `native_log` so app_core's structured logs
+/// reach logcat/stderr instead of going nowhere.
+struct NativeLogWriter;
+
+impl std::io::Write for NativeLogWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        native_log(String::from_utf8_lossy(buf).trim_end());
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+static TRACING_INIT: Lazy<()> = Lazy::new(|| {
+    tracing_subscriber::fmt()
+        .with_writer(|| NativeLogWriter)
+        .with_max_level(tracing_subscriber::filter::LevelFilter::INFO)
+        .with_ansi(false)
+        .init();
+    native_log("RustBridge: tracing subscriber installed");
+});
+
 /// Panic hook to log panics before unwinding discards context
 static PANIC_HOOK: Lazy<()> = Lazy::new(|| {
     panic::set_hook(Box::new(|info| {
@@ -70,6 +93,7 @@ fn panic_detail(payload: &(dyn std::any::Any + Send)) -> String {
 #[no_mangle]
 pub unsafe extern "C" fn call_rust(envelope: *const c_char) -> *mut c_char {
     Lazy::force(&PANIC_HOOK);
+    Lazy::force(&TRACING_INIT);
 
     // Contains any panic before it can unwind across the `extern "C"` boundary,
     // which would abort the process. Requires `panic = "unwind"` (pinned in the
