@@ -2,6 +2,11 @@
 # ts-rs: declare u64/i64/u128/i128 fields as `number` instead of the default
 # `bigint` — React/RN code expects plain numbers.
 TS_RS_LARGE_INT = "number"
+# One bindings/ dir at the repo root for every crate. Set here, not in a
+# crate-level .cargo/config.toml: cargo only reads config from the directory it
+# is invoked in (and its parents), so `cargo test --workspace` from the root
+# would silently ignore a per-crate one.
+TS_RS_EXPORT_DIR = { value = "bindings", relative = true }
 
 # Android 15+ requires 16 KB page-aligned shared libraries (mandatory on Play
 # since Nov 2025). NDK r27+ does this by default; this makes it explicit and

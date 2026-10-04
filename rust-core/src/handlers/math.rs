@@ -4,8 +4,9 @@ use crate::state::CORE_SERVICE;
 use crate::wire::Wire;
 use serde::Deserialize;
 use serde_json::value::RawValue;
+use ts_rs::TS;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum MathCommand {
     AddNumbers { a: i64, b: i64 },

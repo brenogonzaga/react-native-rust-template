@@ -1,6 +1,6 @@
 import { getLocales } from "expo-localization";
 import { I18n } from "i18n-js";
-import type { BridgeError } from "@rust-core/BridgeError";
+import type { BridgeError } from "@bindings/BridgeError";
 
 import en from "./locales/en.json";
 import pt from "./locales/pt.json";

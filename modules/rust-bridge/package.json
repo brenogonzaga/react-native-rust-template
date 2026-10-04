@@ -2,6 +2,9 @@
   "name": "rust-bridge",
   "version": "1.0.0",
   "description": "Expo Native Module connecting React Native to Rust core",
+  "license": "MIT",
+  "author": "react-native-rust-template",
+  "homepage": "https://github.com/brenogonzaga/react-native-rust-template",
   "main": "src/index.ts",
   "types": "src/index.ts",
   "peerDependencies": {

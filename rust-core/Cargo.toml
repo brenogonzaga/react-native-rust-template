@@ -2,6 +2,7 @@
 name = "rust-core"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.80"
 
 [lib]
 name = "rust_bridge"
@@ -13,10 +14,12 @@ crate-type = ["staticlib", "cdylib"]
 app_core = { path = "../crates/app_core" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = { version = "1.0", features = ["raw_value"] }
-once_cell = "1.19"
 thiserror = "2.0"
 ts-rs = "12.0"
-tracing-subscriber = "0.3"
+# Only the formatter: no ANSI colours (logcat/Xcode console) and no `log` bridge.
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "fmt",
+] }
 
 [target.'cfg(target_os = "android")'.dependencies]
 jni = { version = "0.22", default-features = false }

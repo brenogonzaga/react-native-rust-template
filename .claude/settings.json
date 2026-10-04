@@ -1,7 +1,4 @@
 {
-  "permissions": {
-    "allow": ["Bash(rtk find *)", "Bash(rtk git *)"]
-  },
   "enabledPlugins": {
     "expo@claude-plugins-official": true
   }

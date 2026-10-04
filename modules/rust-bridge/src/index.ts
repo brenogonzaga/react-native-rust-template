@@ -1,5 +1,8 @@
 import { requireNativeModule } from "expo-modules-core";
-import type { BridgeError } from "@rust-core/BridgeError";
+import type { BridgeCommand } from "@bindings/BridgeCommand";
+import type { BridgeError } from "@bindings/BridgeError";
+
+export type { BridgeCommand };
 
 interface RustBridgeNative {
   callRust(envelopeJson: string): Promise<string>;
@@ -11,9 +14,15 @@ interface RustBridgeNative {
 let nativeModule: RustBridgeNative | undefined;
 function getNativeModule(): RustBridgeNative {
   if (nativeModule) return nativeModule;
-  const resolved = requireNativeModule<RustBridgeNative>("RustBridge");
-  nativeModule = resolved;
-  return resolved;
+  try {
+    nativeModule = requireNativeModule<RustBridgeNative>("RustBridge");
+  } catch {
+    throw new Error(
+      "RustBridge native module not found. Expo Go and web don't include " +
+        "custom native code: build the app with `npm run ios` / `npm run android`.",
+    );
+  }
+  return nativeModule;
 }
 
 /**
@@ -34,25 +43,19 @@ export class RustBridgeError extends Error {
 /**
  * Calls a Rust command asynchronously via the native Expo bridge.
  *
- * The command and its arguments cross as a single `JSON.stringify`d envelope.
- * Rust parses that document once and never concatenates strings into JSON, so
- * a command name containing quotes cannot forge the `args` it is paired with.
+ * `command` is typed by `BridgeCommand`, generated from the Rust enum of the
+ * same name (rust-core/src/dispatcher.rs), so command names and args are
+ * checked at compile time. It crosses as one `JSON.stringify`d envelope that
+ * Rust parses once — nothing is concatenated into JSON on either side.
  *
- * @param command The Rust command name (snake_case match)
- * @param payload Optional arguments for the command
- * @returns Parsed JSON response payload of type T
+ * @returns The command's `data` payload, typed as `T` by the caller.
  */
 export async function callRust<T = unknown>(
-  command: string,
-  payload?: unknown,
+  command: BridgeCommand,
 ): Promise<T> {
   try {
-    const envelope =
-      payload !== undefined
-        ? { cmd: command, args: payload }
-        : { cmd: command };
     const responseJson = await getNativeModule().callRust(
-      JSON.stringify(envelope),
+      JSON.stringify(command),
     );
 
     const parsed = JSON.parse(responseJson);

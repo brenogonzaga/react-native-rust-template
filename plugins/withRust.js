@@ -1,10 +1,11 @@
-const { withDangerousMod } = require("@expo/config-plugins");
+const { withDangerousMod } = require("expo/config-plugins");
 const { execSync } = require("child_process");
 const path = require("path");
 
 // Both hooks delegate to scripts/setup.js, which is also what `npm run preios`
-// and `npm run preandroid` call. Duplicating the cargo invocations here is how
-// the plugin and the scripts drift apart.
+// and `npm run preandroid` call — so prebuild (EAS, CI, or a plain
+// `npx expo prebuild`) leaves the Rust library in place before `pod install`
+// and Gradle look for it. setup.js picks the cargo profile (release on EAS).
 function buildRust(projectRoot, action, label) {
   console.log(
     `\x1b[36m[Expo Plugin] Compiling Rust core for ${label}...\x1b[0m`,
@@ -25,18 +26,11 @@ function buildRust(projectRoot, action, label) {
 }
 
 module.exports = function withRust(config) {
-  const projectRoot = config._internal?.projectRoot || process.cwd();
-
-  // EAS and explicit device builds need the arm64 device slice, not a simulator one.
-  const isIosDevice =
-    process.env.EAS_BUILD_PLATFORM === "ios" ||
-    process.env.EXPO_BUILD_TARGET === "device";
-
   config = withDangerousMod(config, [
     "ios",
     async (config) => {
       if (process.platform !== "darwin") return config;
-      buildRust(projectRoot, isIosDevice ? "ios-prod" : "ios", "iOS");
+      buildRust(config.modRequest.projectRoot, "ios", "iOS");
       return config;
     },
   ]);
@@ -44,7 +38,7 @@ module.exports = function withRust(config) {
   config = withDangerousMod(config, [
     "android",
     async (config) => {
-      buildRust(projectRoot, "android", "Android");
+      buildRust(config.modRequest.projectRoot, "android", "Android");
       return config;
     },
   ]);

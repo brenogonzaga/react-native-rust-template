@@ -64,6 +64,7 @@ impl AppService {
 
     pub fn calculate_factorial(&self, n: u64) -> Result<u64, CoreError> {
         if n > 20 {
+            tracing::warn!(n, "factorial input exceeds the supported limit");
             return Err(CoreError::FactorialOverflow(n));
         }
         let mut result = 1;
@@ -89,6 +90,7 @@ impl AppService {
         };
         let mut guard = self.users.lock().unwrap_or_else(PoisonError::into_inner);
         guard.insert(id, user.clone());
+        tracing::info!(id = %user.id, "user saved");
         user
     }
 }

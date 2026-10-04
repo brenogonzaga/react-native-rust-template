@@ -7,7 +7,7 @@ const prettierConfig = require("eslint-config-prettier");
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ["dist/*", "rust-core/bindings/**", "crates/app_core/bindings/**"],
+    ignores: ["dist/*", "bindings/**"],
   },
   {
     files: ["scripts/**/*.js", "plugins/**/*.js"],

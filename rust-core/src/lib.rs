@@ -5,29 +5,40 @@ mod safe_int;
 mod state;
 mod wire;
 
-pub mod mock_export;
-
 use dispatcher::{err_json, BridgeCommand, BridgeDispatcher};
 use error::BridgeError;
-use once_cell::sync::Lazy;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::panic;
+use std::sync::LazyLock;
 
-fn native_log(msg: &str) {
+#[derive(Clone, Copy)]
+enum LogLevel {
+    Info,
+    Error,
+}
+
+fn native_log(level: LogLevel, msg: &str) {
     #[cfg(target_os = "android")]
     {
         extern "C" {
             fn __android_log_write(prio: i32, tag: *const c_char, text: *const c_char) -> i32;
         }
-        const ANDROID_LOG_ERROR: i32 = 6;
+        // android/log.h: ANDROID_LOG_INFO = 4, ANDROID_LOG_ERROR = 6.
+        let prio = match level {
+            LogLevel::Info => 4,
+            LogLevel::Error => 6,
+        };
         let tag = CString::new("RustBridge").expect("static tag has no interior null byte");
         if let Ok(text) = CString::new(msg.replace('\0', "")) {
-            unsafe { __android_log_write(ANDROID_LOG_ERROR, tag.as_ptr(), text.as_ptr()) };
+            unsafe { __android_log_write(prio, tag.as_ptr(), text.as_ptr()) };
         }
     }
     #[cfg(not(target_os = "android"))]
-    eprintln!("[RustBridge] {msg}");
+    {
+        let _ = level;
+        eprintln!("[RustBridge] {msg}");
+    }
 }
 
 /// Routes `tracing` output through `native_log` so app_core's structured logs
@@ -36,7 +47,7 @@ struct NativeLogWriter;
 
 impl std::io::Write for NativeLogWriter {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        native_log(String::from_utf8_lossy(buf).trim_end());
+        native_log(LogLevel::Info, String::from_utf8_lossy(buf).trim_end());
         Ok(buf.len())
     }
     fn flush(&mut self) -> std::io::Result<()> {
@@ -44,27 +55,34 @@ impl std::io::Write for NativeLogWriter {
     }
 }
 
-static TRACING_INIT: Lazy<()> = Lazy::new(|| {
-    tracing_subscriber::fmt()
+fn install_tracing() {
+    let installed = tracing_subscriber::fmt()
         .with_writer(|| NativeLogWriter)
         .with_max_level(tracing_subscriber::filter::LevelFilter::INFO)
-        .with_ansi(false)
-        .init();
-    native_log("RustBridge: tracing subscriber installed");
-});
+        .without_time()
+        .try_init();
+    match installed {
+        Ok(()) => native_log(LogLevel::Info, "RustBridge: tracing subscriber installed"),
+        Err(err) => native_log(
+            LogLevel::Error,
+            &format!("tracing subscriber not installed: {err}"),
+        ),
+    }
+}
+
+static TRACING_INIT: LazyLock<()> = LazyLock::new(install_tracing);
 
 /// Panic hook to log panics before unwinding discards context
-static PANIC_HOOK: Lazy<()> = Lazy::new(|| {
+static PANIC_HOOK: LazyLock<()> = LazyLock::new(|| {
     panic::set_hook(Box::new(|info| {
         let location = info
             .location()
             .map(|l| format!("{}:{}", l.file(), l.line()))
             .unwrap_or_else(|| "unknown location".to_string());
-        native_log(&format!(
-            "PANIC at {}: {}",
-            location,
-            panic_detail(info.payload())
-        ));
+        native_log(
+            LogLevel::Error,
+            &format!("PANIC at {}: {}", location, panic_detail(info.payload())),
+        );
     }));
 });
 
@@ -92,8 +110,8 @@ fn panic_detail(payload: &(dyn std::any::Any + Send)) -> String {
 /// either be null or point to a NUL-terminated string valid for this call.
 #[no_mangle]
 pub unsafe extern "C" fn call_rust(envelope: *const c_char) -> *mut c_char {
-    Lazy::force(&PANIC_HOOK);
-    Lazy::force(&TRACING_INIT);
+    LazyLock::force(&PANIC_HOOK);
+    LazyLock::force(&TRACING_INIT);
 
     // Contains any panic before it can unwind across the `extern "C"` boundary,
     // which would abort the process. Requires `panic = "unwind"` (pinned in the
@@ -147,12 +165,14 @@ pub unsafe extern "C" fn free_rust_string(s: *mut c_char) {
 
 /// Android JNI entry point.
 ///
-/// Declared as an *instance* method on `RustBridgeModule` (not on its companion
-/// object) so the mangled symbol is unambiguously
-/// `Java_com_myapp_rustbridge_RustBridgeModule_callRustNative`.
+/// The symbol is fixed by the Kotlin side: `Java_<package>_<Class>_<method>`
+/// for `expo.modules.rustbridge.RustBridgeModule.callRustNative`. That package
+/// belongs to the local module, not to the app, so changing the app's
+/// `android.package` never requires touching this. If you do move the Kotlin
+/// class, `tests/jni_symbol.rs` fails until this name matches again.
 #[cfg(target_os = "android")]
 #[no_mangle]
-pub extern "system" fn Java_com_myapp_rustbridge_RustBridgeModule_callRustNative<'a>(
+pub extern "system" fn Java_expo_modules_rustbridge_RustBridgeModule_callRustNative<'a>(
     mut unowned_env: jni::EnvUnowned<'a>,
     _this: jni::objects::JObject<'a>,
     envelope: jni::objects::JString<'a>,
@@ -251,6 +271,12 @@ mod tests {
             response.contains(r#""kind":"invalid_argument""#),
             "{response}"
         );
+    }
+
+    #[test]
+    fn installing_tracing_twice_does_not_panic() {
+        install_tracing();
+        install_tracing();
     }
 
     #[test]

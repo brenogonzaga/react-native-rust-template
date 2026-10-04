@@ -5,6 +5,6 @@
     "podspecPath": "rust-bridge.podspec"
   },
   "android": {
-    "modules": ["com.myapp.rustbridge.RustBridgeModule"]
+    "modules": ["expo.modules.rustbridge.RustBridgeModule"]
   }
 }

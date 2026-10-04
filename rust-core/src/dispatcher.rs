@@ -4,6 +4,7 @@ use crate::handlers::system::{SystemCommand, SystemHandler};
 use crate::handlers::user::{UserCommand, UserHandler};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
+use ts_rs::TS;
 
 /// Last-resort payload for when even error serialization fails.
 const SERIALIZATION_FALLBACK: &str =
@@ -16,13 +17,18 @@ pub enum BridgeResponse<T> {
     Error(BridgeError),
 }
 
-/// Single producer of the error envelope, so every failure path.
+/// Single producer of the error envelope, so every failure path agrees on its
+/// shape.
 pub fn err_json(err: BridgeError) -> String {
     serde_json::to_string(&BridgeResponse::<()>::Error(err))
         .unwrap_or_else(|_| SERIALIZATION_FALLBACK.to_string())
 }
 
-#[derive(Deserialize)]
+/// Every command the bridge accepts. `callRust()` in TypeScript takes exactly
+/// this type, so command names and args are checked against this enum at
+/// compile time — the TS type *is* the wire format.
+#[derive(Deserialize, TS)]
+#[ts(export)]
 #[serde(tag = "cmd", content = "args", rename_all = "snake_case")]
 pub enum BridgeCommand {
     System(SystemCommand),

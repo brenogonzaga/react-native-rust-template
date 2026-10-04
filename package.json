@@ -54,7 +54,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "jest",
-    "prepare": "husky"
+    "prepare": "husky",
+    "eas-build-pre-install": "node scripts/setup.js eas"
   },
   "private": true,
   "jest": {

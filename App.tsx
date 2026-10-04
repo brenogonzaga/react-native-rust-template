@@ -10,8 +10,8 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import type { User } from "@app_core/User";
-import type { AppVersion } from "@app_core/AppVersion";
+import type { User } from "@bindings/User";
+import type { AppVersion } from "@bindings/AppVersion";
 import { t, resolveInitialLocale, type Locale } from "./src/i18n";
 import { useRustBridge } from "./src/hooks/useRustBridge";
 import { LocaleSwitcher } from "./src/components/LocaleSwitcher";
@@ -58,8 +58,7 @@ export default function App() {
                   "ping",
                   "system",
                   t("app.pingLogTitle", locale),
-                  "system",
-                  { type: "ping" },
+                  { cmd: "system", args: { type: "ping" } },
                 )
               }
               activeOpacity={0.7}
@@ -81,8 +80,7 @@ export default function App() {
                   "version",
                   "system",
                   t("app.versionLogTitle", locale),
-                  "system",
-                  { type: "get_version" },
+                  { cmd: "system", args: { type: "get_version" } },
                 )
               }
               activeOpacity={0.7}
@@ -109,8 +107,7 @@ export default function App() {
                 "math",
                 "native",
                 t("app.factorialTitle", locale),
-                "math",
-                { type: "factorial", n: 5 },
+                { cmd: "math", args: { type: "factorial", n: 5 } },
               )
             }
             activeOpacity={0.7}
@@ -135,8 +132,7 @@ export default function App() {
                 "math-overflow",
                 "native",
                 t("app.factorialOverflowTitle", locale),
-                "math",
-                { type: "factorial", n: 25 },
+                { cmd: "math", args: { type: "factorial", n: 25 } },
               )
             }
             activeOpacity={0.7}
@@ -170,8 +166,7 @@ export default function App() {
                   "get_user",
                   "shared",
                   t("app.getUserLogTitle", locale),
-                  "user",
-                  { type: "get_user", id: "1" },
+                  { cmd: "user", args: { type: "get_user", id: "1" } },
                 )
               }
               activeOpacity={0.7}
@@ -194,12 +189,14 @@ export default function App() {
                   "save_user",
                   "shared",
                   t("app.saveUserLogTitle", locale, { id }),
-                  "user",
                   {
-                    type: "save_user",
-                    id,
-                    name: "Carlos Dev",
-                    role: "Lead Engineer",
+                    cmd: "user",
+                    args: {
+                      type: "save_user",
+                      id,
+                      name: "Carlos Dev",
+                      role: "Lead Engineer",
+                    },
                   },
                 );
               }}

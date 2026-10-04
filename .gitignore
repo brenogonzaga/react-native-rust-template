@@ -6,10 +6,9 @@ target/
 **/*.rs.bk
 
 
-# Compiled Native Rust Libraries (Ignore heavy binaries, preserve folder structure with .gitkeep)
-modules/rust-bridge/ios/lib/*.a
+# Compiled Native Rust Libraries (built by scripts/setup.js)
+modules/rust-bridge/ios/*.xcframework/
 modules/rust-bridge/android/src/main/jniLibs/**/*.so
-!modules/rust-bridge/ios/lib/.gitkeep
 !modules/rust-bridge/android/src/main/jniLibs/.gitkeep
 
 # Node & Package Managers
@@ -45,6 +44,9 @@ Pods/
 
 # Metro & Bundler
 .metro-health-check*
+
+# Claude Code (per-user settings)
+.claude/settings.local.json
 
 # OS & Environment
 .DS_Store

@@ -1,4 +1,4 @@
-package com.myapp.rustbridge
+package expo.modules.rustbridge
 
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -9,18 +9,15 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 
 class RustBridgeModule : Module() {
-  private val bridgeScope =
-    CoroutineScope(Dispatchers.IO + SupervisorJob() + CoroutineName("myapp.rust-bridge"))
+  private val bridgeScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + CoroutineName("rust-bridge"))
 
   private external fun callRustNative(envelopeJson: String): String
 
   override fun definition() = ModuleDefinition {
     Name("RustBridge")
-
     AsyncFunction("callRust") { envelope: String ->
-      loadError?.let {
-        """{"status":"error","kind":"internal","reason":"native library unavailable: ${it.message}"}"""
-      } ?: callRustNative(envelope)
+      loadError?.let { throw IllegalStateException("native library unavailable: ${it.message}", it) }
+      callRustNative(envelope)
     }.runOnQueue(bridgeScope)
 
     OnDestroy {

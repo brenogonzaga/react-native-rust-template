@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { callRust } from "rust-bridge";
+import { callRust, type BridgeCommand } from "rust-bridge";
 import { describeError } from "../utils/describeError";
 import type { Locale } from "../i18n";
 
@@ -35,14 +35,13 @@ export function useRustBridge(locale: Locale) {
     cmdKey: string,
     type: LogEntry["type"],
     title: string,
-    command: string,
-    args?: unknown,
+    command: BridgeCommand,
   ) => {
     setLoading(true);
     setActiveCmd(cmdKey);
     const start = Date.now();
     try {
-      const res = await callRust<T>(command, args);
+      const res = await callRust<T>(command);
       const latency = Date.now() - start;
       const formatted =
         typeof res === "object" ? JSON.stringify(res, null, 2) : String(res);

@@ -1,7 +1,0 @@
-[env]
-# ts-rs: declare u64/i64/u128/i128 fields as `number` instead of the default
-# `bigint` — React/RN code expects plain numbers.
-TS_RS_LARGE_INT = "number"
-
-# Force ts-rs to auto-generate ALL TypeScript bindings directly into rust-core/bindings
-TS_RS_EXPORT_DIR = { value = "bindings", relative = true }
