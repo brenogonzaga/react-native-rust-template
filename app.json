@@ -20,6 +20,17 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.example.rnrusttemplate"
     },
-    "plugins": ["./plugins/withRust", "expo-localization"]
+    "plugins": [
+      "./plugins/withRust",
+      "expo-localization",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "enableSceneSupport": true
+          }
+        }
+      ]
+    ]
   }
 }
