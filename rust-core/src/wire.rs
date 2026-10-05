@@ -7,6 +7,7 @@ use std::fmt;
 /// Marks a type as allowed to cross the FFI boundary as JSON.
 pub trait SafeForWire: Serialize {}
 
+impl SafeForWire for () {}
 impl SafeForWire for str {}
 impl SafeForWire for String {}
 impl<T: fmt::Display> SafeForWire for SafeInt<T> {}

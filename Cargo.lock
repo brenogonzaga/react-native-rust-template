@@ -149,6 +149,7 @@ dependencies = [
  "serde_json",
  "syn 2.0.119",
  "thiserror",
+ "tracing",
  "tracing-subscriber",
  "ts-rs",
 ]

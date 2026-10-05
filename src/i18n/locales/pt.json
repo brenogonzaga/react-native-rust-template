@@ -12,12 +12,14 @@
     "versionLogTitle": "Versão do App",
     "factorialTitle": "Fatorial (5!)",
     "factorialSub": "Cálculo puro em Rust no app_core",
+    "factorialLogTitle": "Fatorial (%{n}!)",
     "factorialOverflowTitle": "Fatorial (25!)",
     "factorialOverflowSub": "Dispara um erro do Rust, mostrado localizado (%{localeLabel})",
     "getUser": "Buscar Usuário",
-    "getUserLogTitle": "Buscar Usuário #1",
+    "getUserLogTitle": "Buscar Usuário #%{id}",
     "saveUser": "Salvar Usuário",
     "saveUserLogTitle": "Salvar Usuário #%{id}",
+    "initLogTitle": "Abrir Armazenamento",
     "loading": "Executando handler Rust...",
     "logsTitle": "LOGS DE EXECUÇÃO",
     "clear": "Limpar",
@@ -27,7 +29,9 @@
     "not_found": "Usuário %{id} não encontrado",
     "factorial_overflow": "Entrada de fatorial %{n} excede o limite máximo de 20",
     "invalid_argument": "Argumento inválido: %{reason}",
+    "invalid_command": "Comando não reconhecido pela biblioteca nativa: %{reason}",
     "internal": "Erro interno: %{reason}",
-    "serialization": "Erro de serialização: %{reason}"
+    "serialization": "Erro de serialização: %{reason}",
+    "storage": "Erro de armazenamento: %{reason}"
   }
 }

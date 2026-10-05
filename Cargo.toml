@@ -10,9 +10,8 @@ panic = "unwind"
 overflow-checks = true
 lto = true
 codegen-units = 1
-# `debuginfo`, not `symbols`: the exported `call_rust` / `free_rust_string`
-# symbols must survive for the iOS staticlib to link.
-strip = "debuginfo"
+debug = "line-tables-only"
+strip = "none"
 
 # Local `npm run ios` / `npm run android` builds (see scripts/setup.js).
 [profile.mobile-dev]
@@ -20,3 +19,4 @@ inherits = "release"
 lto = false
 codegen-units = 16
 incremental = true
+debug = true

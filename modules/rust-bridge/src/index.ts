@@ -1,10 +1,21 @@
 import { requireNativeModule } from "expo-modules-core";
 import type { BridgeCommand } from "@bindings/BridgeCommand";
 import type { BridgeError } from "@bindings/BridgeError";
+import type { BridgeResponses } from "@bindings/BridgeResponses";
 
-export type { BridgeCommand };
+export type { BridgeCommand, BridgeResponses };
+
+export type ResponseOf<C extends BridgeCommand> = C extends {
+  cmd: infer K extends keyof BridgeResponses;
+  args: { type: infer V };
+}
+  ? V extends keyof BridgeResponses[K]
+    ? BridgeResponses[K][V]
+    : never
+  : never;
 
 interface RustBridgeNative {
+  readonly dataDir: string;
   callRust(envelopeJson: string): Promise<string>;
 }
 
@@ -23,6 +34,14 @@ function getNativeModule(): RustBridgeNative {
     );
   }
   return nativeModule;
+}
+
+/**
+ * The app's private, writable directory (Application Support on iOS,
+ * `filesDir` on Android) — pass it to the `system` `init` command.
+ */
+export function dataDir(): string {
+  return getNativeModule().dataDir;
 }
 
 /**
@@ -45,32 +64,62 @@ export class RustBridgeError extends Error {
  *
  * `command` is typed by `BridgeCommand`, generated from the Rust enum of the
  * same name (rust-core/src/dispatcher.rs), so command names and args are
- * checked at compile time. It crosses as one `JSON.stringify`d envelope that
- * Rust parses once — nothing is concatenated into JSON on either side.
- *
- * @returns The command's `data` payload, typed as `T` by the caller.
+ * checked at compile time, and the result is typed by `BridgeResponses`. It
+ * crosses as one `JSON.stringify`d envelope that Rust parses once — nothing is
+ * concatenated into JSON on either side.
  */
-export async function callRust<T = unknown>(
-  command: BridgeCommand,
-): Promise<T> {
+export async function callRust<C extends BridgeCommand>(
+  command: C,
+): Promise<ResponseOf<C>> {
+  const label = `${command.cmd}.${command.args.type}`;
+  const start = Date.now();
   try {
     const responseJson = await getNativeModule().callRust(
       JSON.stringify(command),
     );
 
-    const parsed = JSON.parse(responseJson);
+    const { status, ...parsed } = JSON.parse(responseJson);
 
-    if (parsed.status === "error") {
+    if (status === "error") {
       throw new RustBridgeError(parsed as BridgeError);
     }
 
-    return parsed.data as T;
+    logCall(label, start);
+    return parsed.data as ResponseOf<C>;
   } catch (error) {
-    if (error instanceof RustBridgeError) throw error;
-    throw new Error(
-      `[RustBridge] Bridge call failed: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
-    );
+    const failure =
+      error instanceof RustBridgeError
+        ? error
+        : new Error(
+            `[RustBridge] Bridge call failed: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          );
+    logCall(label, start, failure);
+    throw failure;
+  }
+}
+
+const SLOW_CALL_MS = 100;
+
+function logCall(label: string, start: number, error?: Error) {
+  if (!__DEV__) return;
+  const ms = Date.now() - start;
+  if (error instanceof RustBridgeError) {
+    const { kind, ...detail } = error.bridgeError;
+    const line = `[RustBridge] ${label} → ${kind} ${JSON.stringify(detail)} (${ms}ms)`;
+    if (kind === "invalid_command") {
+      console.warn(
+        `${line}\nThe native library is older than this JS bundle: rebuild it with \`npm run ios\` / \`npm run android\`.`,
+      );
+    } else {
+      console.info(line);
+    }
+  } else if (error) {
+    console.warn(`[RustBridge] ${label} failed (${ms}ms): ${error.message}`);
+  } else if (ms > SLOW_CALL_MS) {
+    console.warn(`[RustBridge] ${label} took ${ms}ms`);
+  } else {
+    console.debug(`[RustBridge] ${label} (${ms}ms)`);
   }
 }

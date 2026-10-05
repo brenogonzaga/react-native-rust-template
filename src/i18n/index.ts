@@ -5,7 +5,10 @@ import type { BridgeError } from "@bindings/BridgeError";
 import en from "./locales/en.json";
 import pt from "./locales/pt.json";
 
-const translations = { en, pt };
+const translations = { en, pt } satisfies Record<
+  string,
+  { errors: Record<BridgeError["kind"], string> }
+>;
 
 export type Locale = keyof typeof translations;
 export const SUPPORTED_LOCALES = Object.keys(translations) as Locale[];

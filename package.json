@@ -55,6 +55,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "jest",
+    "bindings": "cargo test --workspace export_bindings",
+    "check": "cargo fmt --check && cargo clippy --workspace --all-targets -- -D warnings && cargo clippy --target aarch64-linux-android -p rust-core --lib -- -D warnings && cargo test --workspace && npm run lint && npm run format:check && npm run typecheck && npm test",
     "prepare": "husky",
     "eas-build-pre-install": "node scripts/setup.js eas"
   },

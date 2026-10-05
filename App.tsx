@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -10,17 +10,20 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { StatusBar } from "expo-status-bar";
-import type { User } from "@bindings/User";
-import type { AppVersion } from "@bindings/AppVersion";
 import { t, resolveInitialLocale, type Locale } from "./src/i18n";
-import { useRustBridge } from "./src/hooks/useRustBridge";
+import { useCallLog } from "./src/hooks/useCallLog";
+import { MathService, SystemService, UserService } from "./src/services/rust";
 import { LocaleSwitcher } from "./src/components/LocaleSwitcher";
 import { ExecutionConsole } from "./src/components/ExecutionConsole";
 
 export default function App() {
   const [locale, setLocale] = useState<Locale>(resolveInitialLocale());
-  const { logs, loading, activeCmd, runBridge, clearLogs } =
-    useRustBridge(locale);
+  const { calls, busy, track, clear } = useCallLog();
+
+  // On startup: point the Rust core at the app's writable directory.
+  useEffect(() => {
+    track({ kind: "system", title: "app.initLogTitle" }, SystemService.init);
+  }, [track]);
 
   return (
     <SafeAreaProvider>
@@ -48,17 +51,11 @@ export default function App() {
           </Text>
           <View style={styles.row}>
             <TouchableOpacity
-              style={[
-                styles.btn,
-                styles.btnIndigo,
-                activeCmd === "ping" && styles.active,
-              ]}
+              style={[styles.btn, styles.btnIndigo]}
               onPress={() =>
-                runBridge<string>(
-                  "ping",
-                  "system",
-                  t("app.pingLogTitle", locale),
-                  { cmd: "system", args: { type: "ping" } },
+                track(
+                  { kind: "system", title: "app.pingLogTitle" },
+                  SystemService.ping,
                 )
               }
               activeOpacity={0.7}
@@ -70,17 +67,11 @@ export default function App() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.btn,
-                styles.btnSky,
-                activeCmd === "version" && styles.active,
-              ]}
+              style={[styles.btn, styles.btnSky]}
               onPress={() =>
-                runBridge<AppVersion>(
-                  "version",
-                  "system",
-                  t("app.versionLogTitle", locale),
-                  { cmd: "system", args: { type: "get_version" } },
+                track(
+                  { kind: "system", title: "app.versionLogTitle" },
+                  SystemService.version,
                 )
               }
               activeOpacity={0.7}
@@ -97,17 +88,15 @@ export default function App() {
             {t("app.sectionNative", locale)}
           </Text>
           <TouchableOpacity
-            style={[
-              styles.btnFull,
-              styles.btnTeal,
-              activeCmd === "math" && styles.active,
-            ]}
+            style={[styles.btnFull, styles.btnTeal]}
             onPress={() =>
-              runBridge<string>(
-                "math",
-                "native",
-                t("app.factorialTitle", locale),
-                { cmd: "math", args: { type: "factorial", n: 5 } },
+              track(
+                {
+                  kind: "native",
+                  title: "app.factorialLogTitle",
+                  params: { n: 5 },
+                },
+                () => MathService.factorial(5),
               )
             }
             activeOpacity={0.7}
@@ -122,17 +111,15 @@ export default function App() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.btnFull,
-              styles.btnRose,
-              activeCmd === "math-overflow" && styles.active,
-            ]}
+            style={[styles.btnFull, styles.btnRose]}
             onPress={() =>
-              runBridge<string>(
-                "math-overflow",
-                "native",
-                t("app.factorialOverflowTitle", locale),
-                { cmd: "math", args: { type: "factorial", n: 25 } },
+              track(
+                {
+                  kind: "native",
+                  title: "app.factorialLogTitle",
+                  params: { n: 25 },
+                },
+                () => MathService.factorial(25),
               )
             }
             activeOpacity={0.7}
@@ -156,17 +143,15 @@ export default function App() {
           </Text>
           <View style={styles.row}>
             <TouchableOpacity
-              style={[
-                styles.btn,
-                styles.btnAmber,
-                activeCmd === "get_user" && styles.active,
-              ]}
+              style={[styles.btn, styles.btnAmber]}
               onPress={() =>
-                runBridge<User>(
-                  "get_user",
-                  "shared",
-                  t("app.getUserLogTitle", locale),
-                  { cmd: "user", args: { type: "get_user", id: "1" } },
+                track(
+                  {
+                    kind: "shared",
+                    title: "app.getUserLogTitle",
+                    params: { id: "1" },
+                  },
+                  () => UserService.get("1"),
                 )
               }
               activeOpacity={0.7}
@@ -178,26 +163,20 @@ export default function App() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[
-                styles.btn,
-                styles.btnEmerald,
-                activeCmd === "save_user" && styles.active,
-              ]}
+              style={[styles.btn, styles.btnEmerald]}
               onPress={() => {
-                const id = String(Date.now()).slice(-4);
-                runBridge<User>(
-                  "save_user",
-                  "shared",
-                  t("app.saveUserLogTitle", locale, { id }),
+                const user = {
+                  id: String(Date.now()).slice(-4),
+                  name: "Carlos Dev",
+                  role: "Lead Engineer",
+                };
+                track(
                   {
-                    cmd: "user",
-                    args: {
-                      type: "save_user",
-                      id,
-                      name: "Carlos Dev",
-                      role: "Lead Engineer",
-                    },
+                    kind: "shared",
+                    title: "app.saveUserLogTitle",
+                    params: user,
                   },
+                  () => UserService.save(user),
                 );
               }}
               activeOpacity={0.7}
@@ -209,15 +188,14 @@ export default function App() {
             </TouchableOpacity>
           </View>
 
-          {/* Loading Indicator */}
-          {loading && (
+          {busy && (
             <View style={styles.loadingBanner}>
               <ActivityIndicator size="small" color="#4f46e5" />
               <Text style={styles.loadingText}>{t("app.loading", locale)}</Text>
             </View>
           )}
 
-          <ExecutionConsole logs={logs} onClear={clearLogs} locale={locale} />
+          <ExecutionConsole calls={calls} onClear={clear} locale={locale} />
         </ScrollView>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -317,7 +295,6 @@ const styles = StyleSheet.create({
   textAmber: { color: "#92400e" },
   textEmerald: { color: "#065f46" },
   textRose: { color: "#9f1239" },
-  active: { opacity: 0.5 },
   btnIcon: { fontSize: 16 },
   btnTextCol: { flex: 1 },
   btnTitle: { fontSize: 13, fontWeight: "700" },

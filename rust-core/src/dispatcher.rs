@@ -1,7 +1,7 @@
 use crate::error::BridgeError;
-use crate::handlers::math::{MathCommand, MathHandler};
-use crate::handlers::system::{SystemCommand, SystemHandler};
-use crate::handlers::user::{UserCommand, UserHandler};
+use crate::handlers::math::{MathCommand, MathResponses};
+use crate::handlers::system::{SystemCommand, SystemResponses};
+use crate::handlers::user::{UserCommand, UserResponses};
 use serde::{Deserialize, Serialize};
 use serde_json::value::RawValue;
 use ts_rs::TS;
@@ -20,6 +20,7 @@ pub enum BridgeResponse<T> {
 /// Single producer of the error envelope, so every failure path agrees on its
 /// shape.
 pub fn err_json(err: BridgeError) -> String {
+    tracing::warn!(error = %err, "bridge call failed");
     serde_json::to_string(&BridgeResponse::<()>::Error(err))
         .unwrap_or_else(|_| SERIALIZATION_FALLBACK.to_string())
 }
@@ -36,14 +37,25 @@ pub enum BridgeCommand {
     User(UserCommand),
 }
 
+/// Type-only: the `data` type of every command, as `[cmd][type]`. `callRust()`
+/// infers its return type from this, so it can't drift from the Rust side.
+#[derive(TS)]
+#[ts(export)]
+#[allow(dead_code)]
+pub struct BridgeResponses {
+    pub system: SystemResponses,
+    pub math: MathResponses,
+    pub user: UserResponses,
+}
+
 pub struct BridgeDispatcher;
 
 impl BridgeDispatcher {
     pub fn run(command: BridgeCommand) -> String {
         let result: Result<Box<RawValue>, BridgeError> = match command {
-            BridgeCommand::System(sys_cmd) => SystemHandler::dispatch(sys_cmd),
-            BridgeCommand::Math(math_cmd) => MathHandler::dispatch(math_cmd),
-            BridgeCommand::User(user_cmd) => UserHandler::dispatch(user_cmd),
+            BridgeCommand::System(cmd) => cmd.dispatch(),
+            BridgeCommand::Math(cmd) => cmd.dispatch(),
+            BridgeCommand::User(cmd) => cmd.dispatch(),
         };
 
         match result {
@@ -76,6 +88,17 @@ mod tests {
             run(r#"{"cmd":"user","args":{"type":"get_user","id":"nope"}}"#),
             r#"{"status":"error","kind":"not_found","id":"nope"}"#
         );
+    }
+
+    #[test]
+    fn init_takes_the_data_dir() {
+        let cmd: BridgeCommand =
+            serde_json::from_str(r#"{"cmd":"system","args":{"type":"init","data_dir":"/data"}}"#)
+                .unwrap();
+        assert!(matches!(
+            cmd,
+            BridgeCommand::System(SystemCommand::Init(init)) if init.data_dir == "/data"
+        ));
     }
 
     #[test]

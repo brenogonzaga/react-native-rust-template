@@ -17,11 +17,17 @@ pub enum BridgeError {
     #[error("Invalid argument: {reason}")]
     InvalidArgument { reason: String },
 
+    #[error("Invalid command: {reason}")]
+    InvalidCommand { reason: String },
+
     #[error("Internal error: {reason}")]
     Internal { reason: String },
 
     #[error("Serialization error: {reason}")]
     Serialization { reason: String },
+
+    #[error("Storage error: {reason}")]
+    Storage { reason: String },
 }
 
 impl From<serde_json::Error> for BridgeError {
@@ -37,6 +43,7 @@ impl From<CoreError> for BridgeError {
         match err {
             CoreError::UserNotFound(id) => BridgeError::NotFound { id },
             CoreError::FactorialOverflow(n) => BridgeError::FactorialOverflow { n: SafeInt(n) },
+            CoreError::Storage(reason) => BridgeError::Storage { reason },
         }
     }
 }

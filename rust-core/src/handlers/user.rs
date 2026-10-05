@@ -1,6 +1,7 @@
+use super::Command;
 use crate::error::BridgeError;
 use crate::state::CORE_SERVICE;
-use crate::wire::Wire;
+use app_core::User;
 use serde::Deserialize;
 use serde_json::value::RawValue;
 use ts_rs::TS;
@@ -8,25 +9,50 @@ use ts_rs::TS;
 #[derive(Deserialize, TS)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum UserCommand {
-    GetUser {
-        id: String,
-    },
-    SaveUser {
-        id: String,
-        name: String,
-        role: String,
-    },
+    GetUser(GetUser),
+    SaveUser(SaveUser),
 }
 
-pub struct UserHandler;
+#[derive(TS)]
+#[allow(dead_code)]
+pub struct UserResponses {
+    pub get_user: <GetUser as Command>::Response,
+    pub save_user: <SaveUser as Command>::Response,
+}
 
-impl UserHandler {
-    pub fn dispatch(cmd: UserCommand) -> Result<Box<RawValue>, BridgeError> {
-        match cmd {
-            UserCommand::GetUser { id } => Wire::encode(&CORE_SERVICE.get_user(&id)?),
-            UserCommand::SaveUser { id, name, role } => {
-                Wire::encode(&CORE_SERVICE.save_user(id, name, role))
-            }
+impl UserCommand {
+    pub fn dispatch(self) -> Result<Box<RawValue>, BridgeError> {
+        match self {
+            Self::GetUser(cmd) => cmd.respond(),
+            Self::SaveUser(cmd) => cmd.respond(),
         }
+    }
+}
+
+#[derive(Deserialize, TS)]
+pub struct GetUser {
+    pub id: String,
+}
+
+impl Command for GetUser {
+    type Response = User;
+
+    fn run(self) -> Result<User, BridgeError> {
+        Ok(CORE_SERVICE.get_user(&self.id)?)
+    }
+}
+
+#[derive(Deserialize, TS)]
+pub struct SaveUser {
+    pub id: String,
+    pub name: String,
+    pub role: String,
+}
+
+impl Command for SaveUser {
+    type Response = User;
+
+    fn run(self) -> Result<User, BridgeError> {
+        Ok(CORE_SERVICE.save_user(self.id, self.name, self.role)?)
     }
 }

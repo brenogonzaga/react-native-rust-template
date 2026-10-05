@@ -5,17 +5,44 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import type { LogEntry } from "../hooks/useRustBridge";
+import type { Call } from "../hooks/useCallLog";
 import { t, type Locale } from "../i18n";
+import { describeError } from "../utils/describeError";
+
+export interface LogEntry {
+  id: number;
+  time: string;
+  kind: Call["kind"] | "error";
+  title: string;
+  payload: string;
+}
+
+export function toLogEntry(call: Call, locale: Locale): LogEntry {
+  const { result } = call;
+  const title = t(call.title, locale, call.params);
+  return {
+    id: call.id,
+    time: new Date(call.startedAt).toLocaleTimeString(),
+    kind: result?.ok === false ? "error" : call.kind,
+    title: call.ms === undefined ? title : `${title} (${call.ms}ms)`,
+    payload: !result
+      ? "…"
+      : result.ok
+        ? typeof result.data === "object"
+          ? JSON.stringify(result.data, null, 2)
+          : String(result.data)
+        : describeError(result.error, locale),
+  };
+}
 
 interface ExecutionConsoleProps {
-  logs: LogEntry[];
+  calls: Call[];
   onClear: () => void;
   locale: Locale;
 }
 
 export function ExecutionConsole({
-  logs,
+  calls,
   onClear,
   locale,
 }: ExecutionConsoleProps) {
@@ -23,7 +50,7 @@ export function ExecutionConsole({
     <View style={styles.consoleBox}>
       <View style={styles.consoleHeader}>
         <Text style={styles.consoleTitle}>{t("app.logsTitle", locale)}</Text>
-        {logs.length > 0 && (
+        {calls.length > 0 && (
           <TouchableOpacity onPress={onClear}>
             <Text style={styles.clearText}>{t("app.clear", locale)}</Text>
           </TouchableOpacity>
@@ -31,29 +58,31 @@ export function ExecutionConsole({
       </View>
 
       <View style={styles.consoleBody}>
-        {logs.length === 0 ? (
+        {calls.length === 0 ? (
           <Text style={styles.emptyText}>{t("app.logsEmpty", locale)}</Text>
         ) : (
-          logs.map((log) => (
-            <View key={log.id} style={styles.logCard}>
-              <View style={styles.logMeta}>
-                <Text
-                  style={[
-                    styles.tag,
-                    log.type === "system" && styles.tagSystem,
-                    log.type === "native" && styles.tagNative,
-                    log.type === "shared" && styles.tagShared,
-                    log.type === "error" && styles.tagError,
-                  ]}
-                >
-                  {log.type.toUpperCase()}
-                </Text>
-                <Text style={styles.time}>{log.timestamp}</Text>
+          calls
+            .map((call) => toLogEntry(call, locale))
+            .map((log) => (
+              <View key={log.id} style={styles.logCard}>
+                <View style={styles.logMeta}>
+                  <Text
+                    style={[
+                      styles.tag,
+                      log.kind === "system" && styles.tagSystem,
+                      log.kind === "native" && styles.tagNative,
+                      log.kind === "shared" && styles.tagShared,
+                      log.kind === "error" && styles.tagError,
+                    ]}
+                  >
+                    {log.kind.toUpperCase()}
+                  </Text>
+                  <Text style={styles.time}>{log.time}</Text>
+                </View>
+                <Text style={styles.logTitle}>{log.title}</Text>
+                <Text style={styles.logPayload}>{log.payload}</Text>
               </View>
-              <Text style={styles.logTitle}>{log.title}</Text>
-              <Text style={styles.logPayload}>{log.payload}</Text>
-            </View>
-          ))
+            ))
         )}
       </View>
     </View>

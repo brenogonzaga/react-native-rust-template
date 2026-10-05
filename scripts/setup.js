@@ -88,13 +88,7 @@ function requireFile(file) {
 }
 
 function buildIos() {
-  // Local builds target the active simulator arch only (as `expo run:ios`
-  // does); release builds also carry the other one, for generic destinations.
-  const simTargets =
-    PROFILE === "release"
-      ? IOS_SIM_TARGETS
-      : [os.arch() === "arm64" ? "aarch64-apple-ios-sim" : "x86_64-apple-ios"];
-  const targets = [IOS_DEVICE_TARGET, ...simTargets];
+  const targets = [IOS_DEVICE_TARGET, ...IOS_SIM_TARGETS];
   run(
     `cargo build -p rust-core --profile ${PROFILE} ${targets.map((t) => `--target ${t}`).join(" ")}`,
     ROOT_DIR,
@@ -105,22 +99,19 @@ function buildIos() {
     requireFile(
       path.join(ROOT_DIR, "target", target, PROFILE_DIR, "librust_bridge.a"),
     );
-  let simLib = lib(simTargets[0]);
-  if (simTargets.length > 1) {
-    // An xcframework holds one library per platform, so the simulator
-    // architectures are merged into a single fat library first.
-    simLib = path.join(
-      ROOT_DIR,
-      "target",
-      "ios-sim-universal",
-      PROFILE_DIR,
-      "librust_bridge.a",
-    );
-    fs.mkdirSync(path.dirname(simLib), { recursive: true });
-    run(
-      `lipo -create ${simTargets.map((t) => q(lib(t))).join(" ")} -output ${q(simLib)}`,
-    );
-  }
+  // An xcframework holds one library per platform, so the simulator
+  // architectures are merged into a single fat library first.
+  const simLib = path.join(
+    ROOT_DIR,
+    "target",
+    "ios-sim-universal",
+    PROFILE_DIR,
+    "librust_bridge.a",
+  );
+  fs.mkdirSync(path.dirname(simLib), { recursive: true });
+  run(
+    `lipo -create ${IOS_SIM_TARGETS.map((t) => q(lib(t))).join(" ")} -output ${q(simLib)}`,
+  );
 
   fs.rmSync(IOS_XCFRAMEWORK, { recursive: true, force: true });
   run(

@@ -12,12 +12,14 @@
     "versionLogTitle": "App Version",
     "factorialTitle": "Factorial (5!)",
     "factorialSub": "Pure Rust calculation in app_core",
+    "factorialLogTitle": "Factorial (%{n}!)",
     "factorialOverflowTitle": "Factorial (25!)",
     "factorialOverflowSub": "Triggers a Rust error, shown localized (%{localeLabel})",
     "getUser": "Get User",
-    "getUserLogTitle": "Get User #1",
+    "getUserLogTitle": "Get User #%{id}",
     "saveUser": "Save User",
     "saveUserLogTitle": "Save User #%{id}",
+    "initLogTitle": "Open Storage",
     "loading": "Executing Rust handler...",
     "logsTitle": "EXECUTION LOGS",
     "clear": "Clear",
@@ -27,7 +29,9 @@
     "not_found": "User %{id} was not found",
     "factorial_overflow": "Factorial input %{n} exceeds the maximum of 20",
     "invalid_argument": "Invalid argument: %{reason}",
+    "invalid_command": "Command not recognized by the native library: %{reason}",
     "internal": "Internal error: %{reason}",
-    "serialization": "Serialization error: %{reason}"
+    "serialization": "Serialization error: %{reason}",
+    "storage": "Storage error: %{reason}"
   }
 }
